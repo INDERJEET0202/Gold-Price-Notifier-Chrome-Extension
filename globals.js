@@ -1,0 +1,2 @@
+let globalRate;
+let userInput;
