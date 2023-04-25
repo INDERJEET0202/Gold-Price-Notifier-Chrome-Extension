@@ -5,6 +5,8 @@ function runFunction() {
     let btn = document.getElementById('submit');
     btn.addEventListener('click', func);
 
+    // let globalRate = 0;
+
     chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
         if (message.type === "goldRateUpdate") {
             console.log(message.rate);

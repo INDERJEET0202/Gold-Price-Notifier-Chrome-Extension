@@ -14,13 +14,13 @@ let notificationSent;
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
         chrome.tabs.create({
-            url: "chrome://newtab"
+            url: "https://e1.pxfuel.com/desktop-wallpaper/753/593/desktop-wallpaper-thank-you-top-beautiful-pics-ultra-jpg-you-are-the-best.jpg"
         })
         console.log('Extension installed');
     } else if (details.reason === 'update') {
-        // chrome.tabs.create({
-        //     url: "chrome://newtab"
-        // })
+        chrome.tabs.create({
+            url: "https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension"
+        })
         // priceDropAlertNotifi();
         console.log('Extension updated');
     } else if (details.reason === 'uninstall') {
@@ -55,13 +55,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 // Fetch gold rates from metalpriceapi.com
 function fetchGoldRate() {
-    return fetch('https://api.metalpriceapi.com/v1/latest?api_key={yourApiKey}&base=INR&currencies=XAU')
+    return fetch('https://api.metalpriceapi.com/v1/latest?api_key=5f61043a2124d2d8c4f0c26549f839711&base=INR&currencies=XAU')
         .then(response => response.json())
         .then(data => {
-            const rate = data.rates.XAU * 10000000000; // multiply with 10000000000 to convert to INR
-            let rateGST = Math.round(rate * 1.03);
-            console.log(rateGST);
-            // const rate = 1000;
+            // const rate = data.rates.XAU * 10000000000; // multiply with 10000000000 to convert to INR
+            // let rateGST = Math.round(rate * 1.03);
+            // console.log(rateGST);
+            const rate = 1000;
             // const rate = Math.floor(Math.random() * 10);
             return rate;
         })
@@ -85,7 +85,7 @@ setInterval(() => {
 // Sending the message to popup.js every 5 seconds.
 setInterval(() => {
     chrome.runtime.sendMessage({ type: "goldRateUpdate", rate: globalRate });
-}, 5000) //Sends the updated gold rate per second to the popup.js file.
+}, 1000) //Sends the updated gold rate per second to the popup.js file.
 
 // Store the user's gold rate from popup.js
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
@@ -94,6 +94,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     chrome.storage.local.set({ userInput: userInput }, function() {
         console.log("User input value stored.");
     });
+    notificationSent = false;
 });
 
 // Checking if the price goes down and Calling the notification function .
