@@ -17,9 +17,6 @@ function runFunction() {
     });
 
 
-    
-
-
     const priceElement = document.getElementById('price');
     setInterval(() => {
         const newDiv = document.createElement('div');
@@ -31,7 +28,7 @@ function runFunction() {
         // priceElement.textContent = `Gold rate in India today is Rs ${globalRate}/10mg`;
     }, 1000);
 
-
+                                                                                                            
 
     let userInput = 0;
     userInput = localStorage.getItem('userRate');

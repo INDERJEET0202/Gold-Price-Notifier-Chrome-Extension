@@ -8,7 +8,7 @@ importScripts(globalsUrl);
 //     }
 // });
 
-let notificationSent;
+let notificationSent = false;
 
 // Show users some information when then either install / update or uninstall the extension.
 chrome.runtime.onInstalled.addListener((details) => {
@@ -25,7 +25,7 @@ chrome.runtime.onInstalled.addListener((details) => {
         console.log('Extension updated');
     } else if (details.reason === 'uninstall') {
         chrome.tabs.create({
-            url: "chrome://newtab"
+            url: "https://thumbs.dreamstime.com/b/time-to-say-goodbye-message-pin-bulletin-board-64928665.jpg"
         })
         console.log('Extension uninstalled');
     }
@@ -55,15 +55,15 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 // Fetch gold rates from metalpriceapi.com
 function fetchGoldRate() {
-    return fetch('https://api.metalpriceapi.com/v1/latest?api_key=5f61043a2124d2d8c4f0c26549f839711&base=INR&currencies=XAU')
+    return fetch('https://api.metalpriceapi.com/v1/latest?api_key=5f61043a210c26549f83971&base=INR&currencies=XAU')
         .then(response => response.json())
         .then(data => {
-            // const rate = data.rates.XAU * 10000000000; // multiply with 10000000000 to convert to INR
-            // let rateGST = Math.round(rate * 1.03);
-            // console.log(rateGST);
-            const rate = 1000;
+            const rate = data.rates.XAU * 10000000000; // multiply with 10000000000 to convert to INR
+            let rateGST = Math.round(rate * 1.03);
+            console.log(rateGST);
+            // const rate = 1000; //for testing
             // const rate = Math.floor(Math.random() * 10);
-            return rate;
+            return rateGST;
         })
         .catch(error => console.error(error));
 }
@@ -93,8 +93,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     console.log(userInput); // Do something with the userInput variable here
     chrome.storage.local.set({ userInput: userInput }, function() {
         console.log("User input value stored.");
+        notificationSent = false;
     });
-    notificationSent = false;
+    
 });
 
 // Checking if the price goes down and Calling the notification function .
