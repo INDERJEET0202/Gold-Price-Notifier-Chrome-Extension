@@ -130,11 +130,11 @@ function parseLatestHistoryRates(html) {
                 goldRates[purity] = toRate(cells[HISTORY_COLUMNS[code]]);
             }
             if (date && Object.values(goldRates).every((rate) => rate > 0) && (!latest || date > latest.date)) {
-                latest = { date, goldRates, rateSession, rateDate: cells[0] };
+                latest = { date, goldRates, rateSession };
             }
         }
     }
-    return latest && { goldRates: latest.goldRates, rateSession: latest.rateSession, rateDate: latest.rateDate };
+    return latest && { goldRates: latest.goldRates, rateSession: latest.rateSession, rateDate: toIsoDate(latest.date) };
 }
 
 // Returns the text of each cell for every row in the #tab-am or #tab-pm section.
@@ -158,6 +158,11 @@ function parseIbjaDate(text) {
     const monthIndex = /^\d+$/.test(month) ? Number(month) - 1 : MONTHS.indexOf(String(month).slice(0, 3).toLowerCase());
     const date = new Date(Number(year), monthIndex, Number(day));
     return monthIndex >= 0 && date.getDate() === Number(day) ? date : null;
+}
+
+// The popup formats the day itself, so store it as YYYY-MM-DD.
+function toIsoDate(date) {
+    return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map((part) => String(part).padStart(2, '0')).join('-');
 }
 
 function toRate(text = '') {
