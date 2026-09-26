@@ -1,6 +1,6 @@
 // The background service worker keeps the latest rates in chrome.storage.local,
 // so the popup just renders storage and re-renders whenever it changes.
-const STORAGE_KEYS = ['goldRates', 'rateSession', 'lastFetched', 'lastError', 'purity', 'targetRates'];
+const STORAGE_KEYS = ['goldRates', 'rateSession', 'rateDate', 'lastFetched', 'lastError', 'purity', 'targetRates'];
 
 document.addEventListener('DOMContentLoaded', runFunction);
 
@@ -21,7 +21,7 @@ async function runFunction() {
     });
 }
 
-function render({ goldRates = {}, rateSession, lastFetched, lastError, targetRates = {} }) {
+function render({ goldRates = {}, rateSession, rateDate, lastFetched, lastError, targetRates = {} }) {
     const purity = selectedPurity();
     const goldRate = goldRates[purity];
     const targetRate = targetRates[purity];
@@ -38,7 +38,9 @@ function render({ goldRates = {}, rateSession, lastFetched, lastError, targetRat
         statusElement.textContent = `Couldn't update the gold rate: ${lastError}`;
     } else if (goldRate && lastFetched) {
         const updated = new Date(lastFetched).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
-        statusElement.textContent = `IBJA ${rateSession} rate, excl. GST · checked ${updated}`;
+        // rateDate is only set when today has no rate yet (weekends and holidays) and an earlier day's rate is shown.
+        const ratePublished = rateDate ? ` of ${rateDate}` : '';
+        statusElement.textContent = `IBJA ${rateSession} rate${ratePublished}, excl. GST · checked ${updated}`;
     } else {
         statusElement.textContent = '';
     }

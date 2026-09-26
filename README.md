@@ -16,6 +16,7 @@ No API key or account is needed.
 
 - Takes the 24K (999) and 22K (916) gold rates from [IBJA](https://ibjarates.com) (India Bullion and Jewellers Association), India's benchmark rate. It's in ₹ per 10g and includes import duty but not GST or making charges.
 - IBJA publishes an AM rate around noon and a PM rate around 5-6 PM IST on working days. The extension checks every 3 hours using a `chrome.alarms` alarm (MV3 service workers are shut down when idle, so timers like `setInterval` don't survive) and shows the latest one.
+- IBJA doesn't publish on weekends and central government holidays. On those days the extension shows the latest earlier rate from the page's AM/PM history tables, with its date.
 - IBJA has no public API, so the rate is read from the ibjarates.com page. If the site changes its layout, the popup shows an error until the parser is updated.
 - Users pick a purity and input a gold rate for it; these are saved in `chrome.storage.local` along with the latest rates.
 - Whenever IBJA publishes a rate for the selected purity below the user given rate, the extension will send a notification that Gold Price Dropped.
@@ -25,19 +26,16 @@ No API key or account is needed.
 ## Functions
 ### Reading the IBJA rate
 
-ibjarates.com shows today's rates in spans like `<span id="lblGold999_AM">` (24K) and `<span id="lblGold916_PM">` (22K). The PM spans are empty until IBJA publishes them, so the AM rates are used until then. Service workers have no `DOMParser`, so the spans are matched by id.
+ibjarates.com shows today's rates in spans like `<span id="lblGold999_AM">` (24K) and `<span id="lblGold916_PM">` (22K). The PM spans are empty until IBJA publishes them, so the AM rates are used until then. On weekends and holidays those spans are empty, so the latest row of the `#tab-am` / `#tab-pm` history tables is used instead. Service workers have no `DOMParser`, so the markup is matched with regular expressions.
 
 ```javascript
 function parseIbjaRates(html) {
-    for (const rateSession of ['PM', 'AM']) {
-        const goldRates = {};
-        for (const [purity, code] of Object.entries(PURITY_CODES)) {
-            const match = html.match(new RegExp(`id=["']lblGold${code}_${rateSession}["'][^>]*>([^<]*)<`));
-            goldRates[purity] = match ? Math.round(Number(match[1].replace(/[^\d.]/g, ''))) : 0;
-        }
-        if (Object.values(goldRates).every((rate) => rate > 0)) {
-            return { goldRates, rateSession };
-        }
+    const rates = parseTodayRates(html) ?? parseLatestHistoryRates(html);
+    if (rates) {
+        return rates;
+    }
+    if (/not published/i.test(html)) {
+        throw new Error("IBJA hasn't published a rate today (it doesn't on weekends and holidays) and no earlier rate was found on ibjarates.com");
     }
     throw new Error('the 24K and 22K rates are missing from ibjarates.com (the page may have changed)');
 }

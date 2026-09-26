@@ -11,6 +11,9 @@ const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000; // Often enough to pick up both 
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
 // The purities the popup offers, mapped to IBJA's fineness codes.
 const PURITY_CODES = { '24K': '999', '22K': '916' };
+// Column of each fineness in IBJA's history tables: date, 999, 995, 916, 750, 585, silver.
+const HISTORY_COLUMNS = { '999': 1, '995': 2, '916': 3, '750': 4, '585': 5 };
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 chrome.runtime.setUninstallURL('https://thumbs.dreamstime.com/b/time-to-say-goodbye-message-pin-bulletin-board-64928665.jpg');
 
@@ -69,10 +72,10 @@ async function refreshGoldRate() {
         if (!response.ok) {
             throw new Error(`ibjarates.com returned HTTP ${response.status}`);
         }
-        const { goldRates, rateSession } = parseIbjaRates(await response.text());
+        const { goldRates, rateSession, rateDate = null } = parseIbjaRates(await response.text());
         const { goldRates: previousRates = {}, purity = '24K' } = await chrome.storage.local.get(['goldRates', 'purity']);
         console.log(`Gold rates updated (IBJA ${rateSession}):`, goldRates);
-        await chrome.storage.local.set({ goldRates, rateSession, lastFetched: Date.now(), lastError: null });
+        await chrome.storage.local.set({ goldRates, rateSession, rateDate, lastFetched: Date.now(), lastError: null });
         // The page is polled every few hours, but IBJA only publishes twice a day,
         // so only alert when there is actually a new rate.
         if (goldRates[purity] !== previousRates[purity]) {
@@ -84,22 +87,81 @@ async function refreshGoldRate() {
     }
 }
 
-// ibjarates.com shows today's rates in spans like <span id="lblGold999_AM"> and
-// <span id="lblGold916_PM">, in ₹ per 10 grams without GST. The PM spans stay empty
-// until IBJA publishes them in the evening, so fall back to the AM rates until then.
-// Service workers have no DOMParser, so the spans are matched by id.
+// ibjarates.com shows today's rates in ₹ per 10 grams without GST. IBJA doesn't publish
+// on weekends and central government holidays, so on those days fall back to the latest
+// rates in the page's history tables. Service workers have no DOMParser, so the markup
+// is matched with regular expressions.
 function parseIbjaRates(html) {
+    const rates = parseTodayRates(html) ?? parseLatestHistoryRates(html);
+    if (rates) {
+        return rates;
+    }
+    if (/not published/i.test(html)) {
+        throw new Error("IBJA hasn't published a rate today (it doesn't on weekends and holidays) and no earlier rate was found on ibjarates.com");
+    }
+    throw new Error('the 24K and 22K rates are missing from ibjarates.com (the page may have changed)');
+}
+
+// Today's rates are in spans like <span id="lblGold999_AM"> and <span id="lblGold916_PM">.
+// The PM spans stay empty until IBJA publishes them in the evening, so fall back to the AM rates until then.
+function parseTodayRates(html) {
     for (const rateSession of ['PM', 'AM']) {
         const goldRates = {};
         for (const [purity, code] of Object.entries(PURITY_CODES)) {
             const match = html.match(new RegExp(`id=["']lblGold${code}_${rateSession}["'][^>]*>([^<]*)<`));
-            goldRates[purity] = match ? Math.round(Number(match[1].replace(/[^\d.]/g, ''))) : 0;
+            goldRates[purity] = match ? toRate(match[1]) : 0;
         }
         if (Object.values(goldRates).every((rate) => rate > 0)) {
             return { goldRates, rateSession };
         }
     }
-    throw new Error('the 24K and 22K rates are missing from ibjarates.com (the page may have changed)');
+    return null;
+}
+
+// Earlier rates are in tables inside #tab-am and #tab-pm, one row per day. Weekend and
+// holiday rows have no rates. PM is read first so it wins over AM for the same day.
+function parseLatestHistoryRates(html) {
+    let latest = null;
+    for (const rateSession of ['PM', 'AM']) {
+        for (const cells of historyRows(html, rateSession)) {
+            const date = parseIbjaDate(cells[0]);
+            const goldRates = {};
+            for (const [purity, code] of Object.entries(PURITY_CODES)) {
+                goldRates[purity] = toRate(cells[HISTORY_COLUMNS[code]]);
+            }
+            if (date && Object.values(goldRates).every((rate) => rate > 0) && (!latest || date > latest.date)) {
+                latest = { date, goldRates, rateSession, rateDate: cells[0] };
+            }
+        }
+    }
+    return latest && { goldRates: latest.goldRates, rateSession: latest.rateSession, rateDate: latest.rateDate };
+}
+
+// Returns the text of each cell for every row in the #tab-am or #tab-pm section.
+function historyRows(html, rateSession) {
+    const start = html.search(new RegExp(`id=["']tab-${rateSession}["']`, 'i'));
+    if (start < 0) {
+        return [];
+    }
+    const rest = html.slice(start + 1);
+    const end = rest.search(/id=["']tab-/i);
+    const section = end < 0 ? rest : rest.slice(0, end);
+    return (section.match(/<tr[\s\S]*?<\/tr>/gi) ?? [])
+        .map((row) => [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)]
+            .map((cell) => cell[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()))
+        .filter((cells) => cells.length > HISTORY_COLUMNS['916']);
+}
+
+// Dates look like 25/09/2026; month names (25-Sep-2026) are accepted too.
+function parseIbjaDate(text) {
+    const [day, month, year] = text.split(/[\/\-. ]+/);
+    const monthIndex = /^\d+$/.test(month) ? Number(month) - 1 : MONTHS.indexOf(String(month).slice(0, 3).toLowerCase());
+    const date = new Date(Number(year), monthIndex, Number(day));
+    return monthIndex >= 0 && date.getDate() === Number(day) ? date : null;
+}
+
+function toRate(text = '') {
+    return Math.round(Number(text.replace(/[^\d.]/g, '')));
 }
 
 // Runs whenever IBJA publishes a new rate or the user changes their purity or target,
