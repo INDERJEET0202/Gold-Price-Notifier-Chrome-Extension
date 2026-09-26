@@ -12,6 +12,19 @@ Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date wi
 No API key or account is needed.
 
 
+## Running the tests
+
+End-to-end tests load the extension into Chromium with [Playwright](https://playwright.dev) and check the rate parsing, alerts and popup against fake ibjarates.com pages. They never contact the real site.
+
+```bash
+npm install
+npx playwright install chromium   # first time only
+npm test
+```
+
+`npm install` creates a `node_modules/` folder inside the extension folder. Loading the folder in Chrome still works; the extension doesn't use those files.
+
+
 ## Backend ?
 
 - Takes the 24K (999) and 22K (916) gold rates from [IBJA](https://ibjarates.com) (India Bullion and Jewellers Association), India's benchmark rate. It's in ₹ per 10g and includes import duty but not GST or making charges.
