@@ -1,11 +1,11 @@
 # Popup UI
 
-`popup.html` + `popup.css` + `popup.js`, 360px wide. Chrome sizes the popup to its content, up to 800×600. There is no CSS framework: everything is in `popup.css`, with system fonts only.
+`popup.html` + `popup.css` + `popup.js`. The body is 376px wide: an 8px tinted frame (`--frame`) around a 360px rounded panel (`.app`, 18px radius) that holds everything. Chrome sizes the popup to its content, up to 800×600. There is no CSS framework: everything is in `popup.css`, with system fonts only.
 
 ## Layout and element ids
 
 1. Header: `logo48x48.png`, the extension name and "India's IBJA benchmark rate".
-2. Purity switch: radio inputs `#purity-24K` and `#purity-22K` (`name="purity"`) styled as a segmented control (`.segmented`).
+2. Purity switch: radio inputs `#purity-24K` and `#purity-22K` (`name="purity"`) styled as a pill-shaped segmented control (`.segmented`).
 3. `#error-banner`: shown while `lastError` is set; the last good rate stays visible below it.
 4. Rate card (`.rate-card`):
    - `#rate-label` ("24K gold · per 10 g") and the `#rate-session` pill ("IBJA PM rate");
@@ -20,7 +20,7 @@
 
 ## Theming
 
-- Colours are CSS custom properties on `:root` (`--bg`, `--surface`, `--surface-strong`, `--border`, `--text`, `--muted`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`, `--good`, `--warn`, `--warn-soft`, `--shadow`).
+- Colours are CSS custom properties on `:root` (`--frame`, `--bg`, `--surface`, `--surface-strong`, `--border`, `--text`, `--muted`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`, `--good`, `--warn`, `--warn-soft`, `--shadow`).
 - A `@media (prefers-color-scheme: dark)` block redefines them, so the popup follows the OS or Chrome theme with no JavaScript. `color-scheme: light dark` makes native controls match.
 - When adding UI, use the variables rather than literal colours, and check both themes.
 - Animations respect `prefers-reduced-motion`.
@@ -28,5 +28,6 @@
 
 ## Constraints
 
-- The popup window's outer corners and frame are drawn by Chrome and can't be changed by the extension. Rounded looks have to come from elements inside the page.
+- The popup window's outer corners and frame are drawn by Chrome and can't be changed by the extension, which is why the content sits in the rounded `.app` panel on the `--frame` background.
+- Shape language: pills (`border-radius: 999px`) for the switch, input and button; 20px for the rate card; 14px for the banner.
 - Flex children that contain inputs need `min-width: 0`, otherwise the input's intrinsic width pushes the row past 360px.
