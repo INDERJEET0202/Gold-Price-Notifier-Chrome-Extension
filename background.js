@@ -74,11 +74,13 @@ async function refreshGoldRate() {
         const url = `${API_URL}?api_key=${encodeURIComponent(apiKey)}&base=INR&currencies=XAU`;
         const response = await fetch(url);
         const data = await response.json();
-        const ouncesPerRupee = data.rates?.XAU;
-        if (data.success === false || !(ouncesPerRupee > 0)) {
-            throw new Error(data.error?.message || `Unexpected response from metalpriceapi.com (HTTP ${response.status})`);
+        // rates.INRXAU is ₹ per troy ounce. rates.XAU is its inverse (ounces per ₹1) but is
+        // rounded to 8 decimal places, which leaves only 2-3 significant digits, so it's a fallback.
+        const rupeesPerOunce = data.rates?.INRXAU ?? 1 / data.rates?.XAU;
+        if (data.success === false || !(Number.isFinite(rupeesPerOunce) && rupeesPerOunce > 0)) {
+            throw new Error(data.error?.message || data.error?.info || `Unexpected response from metalpriceapi.com (HTTP ${response.status})`);
         }
-        const goldRate = toRupeesPer10Grams(ouncesPerRupee);
+        const goldRate = toRupeesPer10Grams(rupeesPerOunce);
         console.log('Gold rate updated:', goldRate);
         await chrome.storage.local.set({ goldRate, lastFetched: Date.now(), lastError: null });
         await checkPriceDrop();
@@ -88,10 +90,9 @@ async function refreshGoldRate() {
     }
 }
 
-// With base=INR the API returns how many troy ounces of gold ₹1 buys, so invert it
-// to get ₹ per ounce, then convert that to ₹ per 10 grams including GST.
-function toRupeesPer10Grams(ouncesPerRupee) {
-    const rupeesPerGram = 1 / ouncesPerRupee / GRAMS_PER_TROY_OUNCE;
+// Converts the international ₹ per troy ounce price to ₹ per 10 grams including GST.
+function toRupeesPer10Grams(rupeesPerOunce) {
+    const rupeesPerGram = rupeesPerOunce / GRAMS_PER_TROY_OUNCE;
     return Math.round(rupeesPerGram * 10 * (1 + GST_RATE));
 }
 

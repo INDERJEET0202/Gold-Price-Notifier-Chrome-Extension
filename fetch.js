@@ -4,8 +4,8 @@ const api = require('metalpriceapi');
 api.setAPIKey(process.env.METALPRICE_API_KEY);
 
 api.fetchLive('INR', ['XAU']).then((response) => {
-    // rates.XAU is troy ounces per ₹1, so invert it and convert to ₹ per 10 grams.
-    console.log(Math.round(1 / response.data.rates.XAU / 31.1034768 * 10));
+    // rates.INRXAU is ₹ per troy ounce; convert it to ₹ per 10 grams.
+    console.log(Math.round(response.data.rates.INRXAU / 31.1034768 * 10));
 }).catch((error) => {
     console.error("Some thing went wrong.");
 });

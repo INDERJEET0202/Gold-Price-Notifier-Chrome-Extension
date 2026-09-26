@@ -24,11 +24,13 @@ Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date wi
 ## Functions
 ### Converting the API response
 
-With `base=INR` the API returns how many troy ounces of gold ₹1 buys, so the value is inverted to get ₹ per ounce and then converted to ₹ per 10 grams.
+With `base=INR` the API returns `rates.INRXAU` (₹ per troy ounce) and `rates.XAU` (troy ounces per ₹1). `INRXAU` is used because `XAU` is rounded to 8 decimal places, which leaves only 2-3 significant digits at INR scale. The price is then converted to ₹ per 10 grams.
 
 ```javascript
-function toRupeesPer10Grams(ouncesPerRupee) {
-    const rupeesPerGram = 1 / ouncesPerRupee / GRAMS_PER_TROY_OUNCE;
+const rupeesPerOunce = data.rates?.INRXAU ?? 1 / data.rates?.XAU;
+
+function toRupeesPer10Grams(rupeesPerOunce) {
+    const rupeesPerGram = rupeesPerOunce / GRAMS_PER_TROY_OUNCE;
     return Math.round(rupeesPerGram * 10 * (1 + GST_RATE));
 }
 ```
