@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Gold Price Drop Notifier",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "icons": {
         "16": "logo16x16.png",
         "32": "logo32x32.png",
@@ -10,9 +10,12 @@
     },
     "description": "Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date with the latest gold prices and notifies you when the gold price drops below your specified rate. Simply set your desired gold price in the extension settings and let it do the rest.",
     "permissions": [
-        "activeTab",
+        "alarms",
         "notifications",
         "storage"
+    ],
+    "host_permissions": [
+        "https://api.metalpriceapi.com/*"
     ],
     "background": {
         "service_worker": "background.js"
@@ -21,5 +24,9 @@
         "default_popup": "popup.html",
         "default_title": "Gold Price Drop Notifier",
         "default_icon": "logo16x16.png"
+    },
+    "options_ui": {
+        "page": "options.html",
+        "open_in_tab": false
     }
 }

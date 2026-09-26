@@ -1,59 +1,61 @@
+// The background service worker keeps the latest rate in chrome.storage.local,
+// so the popup just renders storage and re-renders whenever it changes.
+const STORAGE_KEYS = ['apiKey', 'goldRate', 'lastFetched', 'lastError', 'targetRate'];
+
 document.addEventListener('DOMContentLoaded', runFunction);
-console.log("DOM is loaded");
 
-function runFunction() {
-    let btn = document.getElementById('submit');
-    btn.addEventListener('click', func);
+async function runFunction() {
+    document.getElementById('rate-form').addEventListener('submit', saveUserRate);
+    document.getElementById('open-settings').addEventListener('click', () => chrome.runtime.openOptionsPage());
 
-    // let globalRate = 0;
+    const state = await chrome.storage.local.get(STORAGE_KEYS);
+    if (state.targetRate) {
+        document.getElementById('user-input').value = state.targetRate;
+    }
+    render(state);
 
-    chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-        if (message.type === "goldRateUpdate") {
-            console.log(message.rate);
-            // Do something with the rate value
-            globalRate = message.rate;
-            localStorage.setItem('goldRate', globalRate);
+    chrome.storage.onChanged.addListener(async (changes, areaName) => {
+        if (areaName === 'local') {
+            render(await chrome.storage.local.get(STORAGE_KEYS));
         }
     });
+}
 
-
+function render({ apiKey, goldRate, lastFetched, lastError, targetRate }) {
+    const loading = document.getElementById('loading');
     const priceElement = document.getElementById('price');
-    setInterval(() => {
-        const newDiv = document.createElement('div');
-        newDiv.id = 'price';
-        const oldDiv = document.getElementById('old-div')
-        const parentDiv = oldDiv.parentNode;
-        newDiv.innerHTML = `Gold rate in India today is Rs ${globalRate}/10mg`;
-        parentDiv.replaceChild(newDiv, oldDiv);
-        // priceElement.textContent = `Gold rate in India today is Rs ${globalRate}/10mg`;
-    }, 1000);
-
-                                                                                                            
-
-    let userInput = 0;
-    userInput = localStorage.getItem('userRate');
-    chrome.runtime.sendMessage({userInput: userInput});
+    const statusElement = document.getElementById('price-status');
     const priceElement2 = document.getElementById('price2');
-    priceElement2.textContent = `You will be informed when price will be below Rs ${userInput}/10mg.`;
 
+    loading.hidden = Boolean(!apiKey || goldRate || lastError);
+    document.getElementById('open-settings').hidden = Boolean(apiKey && !lastError);
 
-
-    function func() {
-        const userInput = document.getElementById("user-input").value;
-        localStorage.setItem('userRate', userInput);
-        chrome.runtime.sendMessage({userInput: userInput});
-
-        // console.log("testing global rate in func " + globalRate)
-        // if (userInput < globalRate){
-        //     chrome.runtime.sendMessage({ greeting: "hello" }, function (response) {
-        //         console.log(response.farewell);
-        //     });
-        // }
-
-        const priceElement2 = document.getElementById('price2');
-        priceElement2.textContent = `You will be informed when price will be below Rs ${userInput}/10mg.`;
-        console.log('btn is clicked.')
+    if (!apiKey) {
+        priceElement.textContent = 'Add your free metalpriceapi.com API key in Settings to see the gold rate.';
+    } else if (goldRate) {
+        priceElement.textContent = `Gold rate in India today is ${formatRupees(goldRate)}/10g`;
+    } else {
+        priceElement.textContent = '';
     }
 
-    console.log("all Scripts are loaded.");
+    if (lastError) {
+        statusElement.textContent = `Couldn't update the gold rate: ${lastError}`;
+    } else if (goldRate && lastFetched) {
+        statusElement.textContent = `Updated ${new Date(lastFetched).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    } else {
+        statusElement.textContent = '';
+    }
+
+    priceElement2.textContent = targetRate
+        ? `You will be informed when price will be below ${formatRupees(targetRate)}/10g.`
+        : 'Enter a rate to get notified when gold drops below it.';
+}
+
+function saveUserRate(event) {
+    event.preventDefault();
+    const targetRate = Number(document.getElementById('user-input').value);
+    if (targetRate > 0) {
+        // background.js watches storage and checks the price as soon as this changes.
+        chrome.storage.local.set({ targetRate });
+    }
 }
