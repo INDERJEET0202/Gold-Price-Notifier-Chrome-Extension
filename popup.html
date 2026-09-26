@@ -19,8 +19,16 @@
     <div class="container">
         <div class="row">
             <form id="rate-form" class="col-xs-6">
+                <div class="d-flex justify-content-center pt-2">
+                    <div class="btn-group" role="group" aria-label="Gold purity">
+                        <input type="radio" class="btn-check" name="purity" id="purity-24K" value="24K" checked>
+                        <label class="btn btn-outline-warning text-dark" for="purity-24K">24K</label>
+                        <input type="radio" class="btn-check" name="purity" id="purity-22K" value="22K">
+                        <label class="btn btn-outline-warning text-dark" for="purity-22K">22K</label>
+                    </div>
+                </div>
                 <div class="d-flex justify-content-center">
-                    <label for="user-input">Your 24K gold rate (₹/10g):</label>
+                    <label for="user-input" id="user-input-label">Your 24K gold rate (₹/10g):</label>
                 </div>
                 <input type="number" id="user-input" min="1" step="1" required>
                 <div class="d-grid gap-2 col-6 mx-auto py-2">
