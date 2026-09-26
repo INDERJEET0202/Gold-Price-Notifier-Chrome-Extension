@@ -1,5 +1,6 @@
 :root {
     color-scheme: light dark;
+    --frame: #ece5d8;
     --bg: #ffffff;
     --surface: #faf7f2;
     --surface-strong: #f2ece1;
@@ -18,6 +19,7 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
+        --frame: #0b0a09;
         --bg: #161412;
         --surface: #201d1a;
         --surface-strong: #2b2723;
@@ -44,9 +46,16 @@ body {
     margin: 0;
 }
 
+html {
+    background: var(--frame);
+}
+
+/* Chrome draws the popup window with square corners, so the content sits on a tinted
+   frame as one rounded panel. */
 body {
-    width: 360px;
-    background: var(--bg);
+    width: 376px;
+    padding: 8px;
+    background: var(--frame);
     color: var(--text);
     font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -54,6 +63,13 @@ body {
 
 [hidden] {
     display: none !important;
+}
+
+.app {
+    overflow: hidden;
+    border-radius: 18px;
+    background: var(--bg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* Header */
@@ -97,7 +113,7 @@ main {
     display: grid;
     grid-template-columns: 1fr 1fr;
     padding: 4px;
-    border-radius: 12px;
+    border-radius: 999px;
     background: var(--surface-strong);
 }
 
@@ -109,7 +125,7 @@ main {
 
 .segmented label {
     padding: 7px 0;
-    border-radius: 9px;
+    border-radius: 999px;
     text-align: center;
     font-weight: 600;
     color: var(--muted);
@@ -139,8 +155,8 @@ main {
 
 .banner {
     margin: 0;
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 10px 14px;
+    border-radius: 14px;
     background: var(--warn-soft);
     color: var(--warn);
     font-size: 12.5px;
@@ -151,7 +167,7 @@ main {
 .rate-card {
     padding: 16px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 20px;
     background: var(--surface);
     box-shadow: var(--shadow);
 }
@@ -255,9 +271,9 @@ main {
     flex: 1;
     align-items: center;
     min-width: 0;
-    padding: 0 12px;
+    padding: 0 16px;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 999px;
     background: var(--bg);
     transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -293,9 +309,9 @@ main {
 
 .btn-primary {
     flex-shrink: 0;
-    padding: 0 16px;
+    padding: 0 20px;
     border: 0;
-    border-radius: 10px;
+    border-radius: 999px;
     background: var(--accent);
     color: var(--on-accent);
     font: inherit;
