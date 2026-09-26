@@ -1,0 +1,11 @@
+{
+  "name": "gold-price-drop-notifier",
+  "private": true,
+  "description": "Dev-only tooling for the Gold Price Drop Notifier Chrome extension. The extension itself has no dependencies.",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
