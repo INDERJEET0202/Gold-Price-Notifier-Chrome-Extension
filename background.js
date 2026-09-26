@@ -1,13 +1,13 @@
 // MV3 service workers are shut down when idle, so nothing is kept in memory:
-// all state lives in chrome.storage.local and the daily refresh runs off chrome.alarms.
+// all state lives in chrome.storage.local and the periodic refresh runs off chrome.alarms.
 
 importScripts('format.js');
 
-const API_URL = 'https://api.metalpriceapi.com/v1/latest';
-const GRAMS_PER_TROY_OUNCE = 31.1034768;
-const GST_RATE = 0.03;
+// IBJA (India Bullion and Jewellers Association) publishes India's benchmark gold rate
+// twice each working day, an AM rate around noon and a PM rate around 5-6 PM IST.
+const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
-const REFRESH_INTERVAL_MS = 24 * 60 * 60 * 1000; // The gold rate is fetched once a day.
+const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000; // Often enough to pick up both daily IBJA rates.
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
 
 chrome.runtime.setUninstallURL('https://thumbs.dreamstime.com/b/time-to-say-goodbye-message-pin-bulletin-board-64928665.jpg');
@@ -18,8 +18,6 @@ chrome.runtime.onInstalled.addListener((details) => {
         chrome.tabs.create({
             url: "https://e1.pxfuel.com/desktop-wallpaper/753/593/desktop-wallpaper-thank-you-top-beautiful-pics-ultra-jpg-you-are-the-best.jpg"
         });
-        // Without an API key there is no rate to show, so ask for one straight away.
-        chrome.runtime.openOptionsPage();
     } else if (details.reason === 'update') {
         chrome.tabs.create({
             url: "https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension"
@@ -40,12 +38,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     }
 });
 
-// The popup and options page only write to storage; react to what they changed.
+// The popup only writes the user's rate to storage; check it as soon as it changes.
 chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local') return;
-    if (changes.apiKey) {
-        refreshGoldRate();
-    } else if (changes.targetRate) {
+    if (areaName === 'local' && changes.targetRate) {
         checkPriceDrop();
     }
 });
@@ -65,38 +60,44 @@ async function refreshIfStale() {
     }
 }
 
-// Fetch gold rates from metalpriceapi.com
+// Fetch today's 24K gold rate from ibjarates.com
 async function refreshGoldRate() {
-    const { apiKey } = await chrome.storage.local.get('apiKey');
-    if (!apiKey) return;
-
     try {
-        const url = `${API_URL}?api_key=${encodeURIComponent(apiKey)}&base=INR&currencies=XAU`;
-        const response = await fetch(url);
-        const data = await response.json();
-        // rates.INRXAU is ₹ per troy ounce. rates.XAU is its inverse (ounces per ₹1) but is
-        // rounded to 8 decimal places, which leaves only 2-3 significant digits, so it's a fallback.
-        const rupeesPerOunce = data.rates?.INRXAU ?? 1 / data.rates?.XAU;
-        if (data.success === false || !(Number.isFinite(rupeesPerOunce) && rupeesPerOunce > 0)) {
-            throw new Error(data.error?.message || data.error?.info || `Unexpected response from metalpriceapi.com (HTTP ${response.status})`);
+        const response = await fetch(IBJA_URL);
+        if (!response.ok) {
+            throw new Error(`ibjarates.com returned HTTP ${response.status}`);
         }
-        const goldRate = toRupeesPer10Grams(rupeesPerOunce);
-        console.log('Gold rate updated:', goldRate);
-        await chrome.storage.local.set({ goldRate, lastFetched: Date.now(), lastError: null });
-        await checkPriceDrop();
+        const { goldRate, rateSession } = parseIbjaRate(await response.text());
+        const { goldRate: previousRate } = await chrome.storage.local.get('goldRate');
+        console.log(`Gold rate updated: ${goldRate} (IBJA ${rateSession})`);
+        await chrome.storage.local.set({ goldRate, rateSession, lastFetched: Date.now(), lastError: null });
+        // The page is polled every few hours, but IBJA only publishes twice a day,
+        // so only alert when there is actually a new rate.
+        if (goldRate !== previousRate) {
+            await checkPriceDrop();
+        }
     } catch (error) {
         console.error('Failed to fetch the gold rate:', error);
         await chrome.storage.local.set({ lastError: error.message });
     }
 }
 
-// Converts the international ₹ per troy ounce price to ₹ per 10 grams including GST.
-function toRupeesPer10Grams(rupeesPerOunce) {
-    const rupeesPerGram = rupeesPerOunce / GRAMS_PER_TROY_OUNCE;
-    return Math.round(rupeesPerGram * 10 * (1 + GST_RATE));
+// ibjarates.com shows today's 999 (24K) rates in <span id="lblGold999_AM"> and
+// <span id="lblGold999_PM">, in ₹ per 10 grams without GST. The PM span stays empty
+// until IBJA publishes it in the evening, so fall back to the AM rate until then.
+// Service workers have no DOMParser, so the spans are matched by id.
+function parseIbjaRate(html) {
+    for (const rateSession of ['PM', 'AM']) {
+        const match = html.match(new RegExp(`id=["']lblGold999_${rateSession}["'][^>]*>([^<]*)<`));
+        const rate = match ? Number(match[1].replace(/[^\d.]/g, '')) : 0;
+        if (rate > 0) {
+            return { goldRate: Math.round(rate), rateSession };
+        }
+    }
+    throw new Error('the 24K rate is missing from ibjarates.com (the page may have changed)');
 }
 
-// Runs whenever a new rate is fetched (once a day) or the user changes their target,
+// Runs whenever IBJA publishes a new rate or the user changes their target,
 // so each of those notifies at most once.
 async function checkPriceDrop() {
     const { goldRate, targetRate } = await chrome.storage.local.get(['goldRate', 'targetRate']);
@@ -111,7 +112,7 @@ function priceDropAlertNotifi(goldRate, targetRate) {
         type: 'basic',
         iconUrl: 'Icons/logo.png',
         title: 'Gold Price Drop Alert',
-        message: `Gold is now ${formatRupees(goldRate)}/10g, below your rate of ${formatRupees(targetRate)}/10g. Buy Gold now!`
+        message: `24K gold is now ${formatRupees(goldRate)}/10g, below your rate of ${formatRupees(targetRate)}/10g. Buy Gold now!`
     }, function (notificationId) {
         console.log('Notification sent with ID:', notificationId);
     });
