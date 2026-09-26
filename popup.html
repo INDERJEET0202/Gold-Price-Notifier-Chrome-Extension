@@ -1,60 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Gold Rates Extension</title>
+    <meta charset="utf-8">
+    <title>Gold Price Drop Notifier</title>
     <link rel="stylesheet" href="popup.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
 </head>
 
 <body>
-    <header>
-        <div class="header">
-            <h1>Time to buy gold</h1>
+    <header class="app-header">
+        <img src="logo48x48.png" alt="" class="app-logo">
+        <div>
+            <h1 class="app-title">Gold Price Drop Notifier</h1>
+            <p class="app-subtitle">India's IBJA benchmark rate</p>
         </div>
     </header>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-xs-6">
-                <div class="d-flex justify-content-center">
-                    <label for="user-input">Enter your gold rate:</label>
-                </div>
-                <input type="string" id="user-input">
-                <div class="d-grid gap-2 col-6 mx-auto py-2">
-                    <button id="submit" class="btn btn-success" type="button">Submit Rate</button>
-                </div>
-            </div>
-            <div class="col-xs-6">
-                <div class="text-center">
-                    <div class="cont">
-                        <div id="old-div" class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <!-- <p id="price"></p> -->
-                    <p id="price2"></p>
-                </div>
-            </div>
-            <div class="btn">
-                <a href="https://groww.in/gold-rates" target="_blank">
-                    <button class="btn btn-primary small" type="button">Check Gold rates online</button>
-                </a>
-            </div>
+    <main>
+        <div class="segmented" role="radiogroup" aria-label="Gold purity">
+            <input type="radio" name="purity" id="purity-24K" value="24K" checked>
+            <label for="purity-24K">24K <span>999</span></label>
+            <input type="radio" name="purity" id="purity-22K" value="22K">
+            <label for="purity-22K">22K <span>916</span></label>
         </div>
-    </div>
 
+        <p id="error-banner" class="banner" role="alert" hidden></p>
 
-    <footer>
-        <p>&copy; 2023 Gold Rates Extension</p>
+        <section class="rate-card" aria-live="polite">
+            <div class="rate-card-top">
+                <span id="rate-label" class="eyebrow">24K gold · per 10 g</span>
+                <span id="rate-session" class="pill" hidden></span>
+            </div>
+            <div id="rate-loading" class="skeleton" role="status" aria-label="Loading the gold rate"></div>
+            <p id="rate-value" class="rate-value" hidden></p>
+            <p id="rate-meta" class="rate-meta"></p>
+            <p id="target-diff" class="target-diff" hidden></p>
+        </section>
+
+        <form id="rate-form" class="alert-form">
+            <label for="user-input" id="user-input-label" class="field-label">Alert me when 24K drops below</label>
+            <div class="field-row">
+                <div class="input-wrap">
+                    <span class="input-prefix" aria-hidden="true">₹</span>
+                    <input type="number" id="user-input" min="1" step="1" inputmode="numeric" placeholder="e.g. 150000" required>
+                </div>
+                <button id="submit" type="submit" class="btn-primary">Set alert</button>
+            </div>
+            <p id="target-hint" class="hint"></p>
+        </form>
+    </main>
+
+    <footer class="app-footer">
+        <span>Per 10 g, excl. GST</span>
+        <a href="https://ibjarates.com/" target="_blank" rel="noopener">ibjarates.com ↗</a>
     </footer>
 
+    <script src="format.js"></script>
     <script src="popup.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-        crossorigin="anonymous"></script>
-
 </body>
 
 </html>

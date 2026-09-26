@@ -1,2 +1,0 @@
-let globalRate;
-let userInput;
