@@ -8,6 +8,7 @@ const CHART_WIDTH = 120;
 const CHART_HEIGHT = 40;
 const CHART_PADDING = 5; // Keeps the line and the end dot inside the chart.
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const REFRESH_NOW_MESSAGE = 'refresh-now'; // Handled in background.js.
 
 document.addEventListener('DOMContentLoaded', runFunction);
 
@@ -15,6 +16,7 @@ async function runFunction() {
     document.getElementById('rate-form').addEventListener('submit', saveUserRate);
     document.querySelectorAll('input[name="purity"]').forEach((radio) => radio.addEventListener('change', savePurity));
     document.getElementById('include-gst').addEventListener('change', saveIncludeGst);
+    document.getElementById('refresh').addEventListener('click', refreshNow);
 
     // Listen before the first read, so a fetch that finishes while the popup opens isn't missed.
     chrome.storage.onChanged.addListener(async (changes, areaName) => {
@@ -175,6 +177,20 @@ async function savePurity() {
     fillUserInput(purity, targetRates, includeGst);
     // background.js watches storage and checks the price for the new purity.
     await chrome.storage.local.set({ purity });
+}
+
+// Asks the service worker to fetch the rate now. The new rate (or error) reaches the popup through
+// storage like any other; the button just shows that a check is running.
+async function refreshNow() {
+    const button = document.getElementById('refresh');
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+    try {
+        await chrome.runtime.sendMessage({ type: REFRESH_NOW_MESSAGE });
+    } finally {
+        button.disabled = false;
+        button.setAttribute('aria-busy', 'false');
+    }
 }
 
 async function saveIncludeGst() {

@@ -1,6 +1,6 @@
 # Architecture
 
-The service worker and the popup never message each other. `chrome.storage.local` is the single source of truth: the service worker writes rates, the popup writes user settings, and each reacts to the other through `chrome.storage.onChanged`.
+The service worker and the popup exchange only one message: the popup's refresh button sends `refresh-now` (`REFRESH_NOW_MESSAGE`), and the service worker fetches and replies when done. Everything else goes through `chrome.storage.local`, the single source of truth: the service worker writes rates, the popup writes user settings, and each reacts to the other through `chrome.storage.onChanged`.
 
 ```
 ibjarates.com ──fetch──► background.js ──set──► chrome.storage.local ◄──set── popup.js
@@ -35,7 +35,7 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 - A failed fetch leaves `lastFetched` unchanged, so it is retried at the next hourly alarm.
 - Each successful fetch merges into `rateHistory` (`mergeRateHistory()`): every day in the page's history tables, then the current rate at `rateDate`, or at today's date in India (`istDate()`) when it is today's rate. Later entries replace earlier ones for the same date. The stored copy means the chart fills up over time even if the page shows only a few days.
 - `refreshGoldRate(now)` and `refreshIfStale(now)` take the time as a parameter so tests can fix it.
-- Opening the popup never fetches. It only renders storage.
+- Opening the popup never fetches. It only renders storage. The popup's refresh button is the one way to fetch outside the schedule: it sends `refresh-now` and the `runtime.onMessage` listener runs `refreshGoldRate()` straight away, whatever `refreshIntervalMs()` says. The result arrives through storage like any other fetch, including the price-drop check.
 - Nothing runs while Chrome is closed.
 
 ## When a notification is sent
