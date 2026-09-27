@@ -19,7 +19,8 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 | `lastFetched` | background | `Date.now()` of the last successful fetch. Not updated on failure. |
 | `lastError` | background | Message of the last failed fetch, `null` after a success |
 | `purity` | popup | `'24K'` or `'22K'`; defaults to `'24K'` when unset |
-| `targetRates` | popup | `{ '24K'?: number, '22K'?: number }`: a separate alert price for each purity |
+| `targetRates` | popup | `{ '24K'?: number, '22K'?: number }`: a separate alert price for each purity, without GST like the rates. An alert price entered with GST is divided by 1.03 and rounded to paise (e.g. `157281.55`), so it shows back exactly as entered. |
+| `includeGst` | popup | `true` to show prices with 3% GST (`GST_RATE`) in the popup, badge and alerts; unset or `false` shows IBJA's figures without GST. It only changes what is shown: alerts compare the stored figures, so switching never makes one fire. |
 | `alertedDips` | background | `{ '24K'?: number, '22K'?: number }`: for each purity currently below its alert price, the alert price that has already alerted during this dip |
 
 ## When the rate is fetched (`background.js`)
@@ -50,13 +51,15 @@ Alerts fire **once per dip**: when the selected purity's rate first goes strictl
   - saving a different alert price during a dip alerts once for the new price;
   - switching purity alerts if that purity is in a dip that hasn't alerted yet.
 
+The message shows the prices with GST ("… is now ₹1,61,710/10g incl. GST, below your rate of ₹1,62,000/10g") when `includeGst` is on.
+
 Every alert uses the notification id `price-drop` (`PRICE_DROP_NOTIFICATION`), so a new one replaces any that is still showing. Clicking it runs `openIbjaFromNotification()`, which opens ibjarates.com in a new tab and dismisses the alert.
 
 ## Toolbar badge
 
 `updateBadge()` shows the selected purity's rate on the toolbar icon in thousands (`158K` for ₹1,57,739), because Chrome's badge only fits about four characters. The badge is gold (`BADGE_COLOR`), or green (`BADGE_COLOR_BELOW_TARGET`) while the rate is below the alert price, and empty until there is a rate. The icon's tooltip (`chrome.action.setTitle`) has the full rate, the session and the distance to the alert price.
 
-It runs when `goldRates`, `targetRates` or `purity` change in storage, and on install and startup, because Chrome clears the badge when the browser restarts.
+Amounts follow `includeGst`, so the badge reads `162K` for ₹1,57,739 with GST. It runs when `goldRates`, `targetRates`, `purity` or `includeGst` change in storage, and on install and startup, because Chrome clears the badge when the browser restarts.
 
 ## Other behaviour
 

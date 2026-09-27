@@ -342,6 +342,7 @@ main {
 
 .app-footer {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     padding: 12px 18px;
     border-top: 1px solid var(--border);
@@ -357,4 +358,60 @@ main {
 
 .app-footer a:hover {
     text-decoration: underline;
+}
+
+/* "Include 3% GST" switch: a checkbox drawn as a small pill-shaped toggle. */
+.toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.toggle-track {
+    position: relative;
+    flex-shrink: 0;
+    width: 28px;
+    height: 16px;
+    border-radius: 999px;
+    background: var(--muted);
+    transition: background 0.15s;
+}
+
+.toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    transition: transform 0.15s;
+}
+
+.toggle input:checked + .toggle-track {
+    background: var(--accent);
+}
+
+.toggle input:checked + .toggle-track::after {
+    transform: translateX(12px);
+}
+
+.toggle input:focus-visible + .toggle-track {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toggle-track,
+    .toggle-track::after {
+        transition: none;
+    }
 }

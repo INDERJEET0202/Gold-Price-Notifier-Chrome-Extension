@@ -25,6 +25,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/refresh-schedule.spec.js` | How often `refreshIfStale(now)` fetches inside and outside IBJA's publishing windows and at weekends |
 | `tests/welcome.spec.js` | The welcome page opening on install and fitting the window |
 | `tests/trend.spec.js` | `rateHistory` (merging, PM over AM, dates in India, the 10-day limit) and the popup's trend line and sparkline |
+| `tests/gst.spec.js` | The GST switch in the popup, per-gram prices, entering an alert price with GST, and GST in alerts and the badge |
 | `tests/badge.spec.js` | The toolbar badge's text, colour and tooltip, following the purity and alert price, and after a restart |
 | `tests/notification-click.spec.js` | Clicking a price alert opens ibjarates.com (calls the `onClicked` handler directly, since tests can't click a desktop notification) |
 

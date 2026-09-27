@@ -25,7 +25,7 @@ test.describe('popup', () => {
         await expect(popup.locator('#rate-value')).toHaveText('₹1,57,739');
         await expect(popup.locator('#rate-label')).toHaveText('24K gold · per 10 g');
         await expect(popup.locator('#rate-session')).toHaveText('IBJA PM rate');
-        await expect(popup.locator('#rate-meta')).toHaveText('Today · checked 5 min ago');
+        await expect(popup.locator('#rate-meta')).toHaveText('₹15,774/g · Today · checked 5 min ago');
         await expect(popup.locator('#error-banner')).toBeHidden();
     });
 
@@ -33,7 +33,7 @@ test.describe('popup', () => {
         await extension.setStorage({ goldRates: RATES, rateSession: 'PM', rateDate: '2026-09-25', lastFetched: minutesAgo(120) });
         const popup = await extension.openPopup();
 
-        await expect(popup.locator('#rate-meta')).toHaveText('Fri, 25 Sept · checked 2 h ago');
+        await expect(popup.locator('#rate-meta')).toHaveText('₹15,774/g · Fri, 25 Sept · checked 2 h ago');
     });
 
     test('shows how far the rate is from the alert price', async ({ extension }) => {
@@ -121,13 +121,14 @@ test.describe('popup', () => {
                 lastFetched: Date.now(),
                 lastError: 'the 24K and 22K rates are missing from ibjarates.com (the page may have changed)',
                 targetRates: { '24K': 158000 },
+                includeGst: true, // The longest rate label.
                 rateHistory: [
                     { date: '2026-09-24', goldRates: { '24K': 158159, '22K': 144400 } },
                     { date: '2026-09-25', goldRates: RATES },
                 ],
             });
             const popup = await extension.openPopup({ colorScheme });
-            await expect(popup.locator('#rate-value')).toHaveText('₹1,57,739');
+            await expect(popup.locator('#rate-value')).toHaveText('₹1,62,471');
             await expect(popup.locator('#rate-chart')).toBeVisible();
 
             const layout = await popup.evaluate(() => ({
