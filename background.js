@@ -88,14 +88,9 @@ async function refreshGoldRate() {
             throw new Error(`ibjarates.com returned HTTP ${response.status}`);
         }
         const { goldRates, rateSession, rateDate = null } = parseIbjaRates(await response.text());
-        const { goldRates: previousRates = {}, purity = '24K' } = await chrome.storage.local.get(['goldRates', 'purity']);
         console.log(`Gold rates updated (IBJA ${rateSession}):`, goldRates);
         await chrome.storage.local.set({ goldRates, rateSession, rateDate, lastFetched: Date.now(), lastError: null });
-        // The page is polled every few hours, but IBJA only publishes twice a day,
-        // so only alert when there is actually a new rate.
-        if (goldRates[purity] !== previousRates[purity]) {
-            await checkPriceDrop();
-        }
+        await checkPriceDrop();
     } catch (error) {
         console.error('Failed to fetch the gold rate:', error);
         await chrome.storage.local.set({ lastError: error.message });
@@ -184,15 +179,36 @@ function toRate(text = '') {
     return Math.round(Number(text.replace(/[^\d.]/g, '')));
 }
 
-// Runs whenever IBJA publishes a new rate or the user changes their purity or target,
-// so each of those notifies at most once.
-async function checkPriceDrop() {
-    const { goldRates = {}, targetRates = {}, purity = '24K' } = await chrome.storage.local.get(['goldRates', 'targetRates', 'purity']);
-    const goldRate = goldRates[purity];
-    const targetRate = targetRates[purity];
-    if (goldRate && targetRate && goldRate < targetRate) {
-        priceDropAlertNotifi(purity, goldRate, targetRate);
+// Runs after every fetch and whenever the user changes their purity or alert price. Checks read
+// and then update alertedDips, so they are queued to run one at a time; otherwise a fetch
+// finishing just as the user saves a price could alert twice. (The queue only orders work in
+// flight; nothing in it needs to survive the service worker shutting down.)
+let alertCheckQueue = Promise.resolve();
+
+function checkPriceDrop() {
+    alertCheckQueue = alertCheckQueue.then(runPriceDropCheck, runPriceDropCheck);
+    return alertCheckQueue;
+}
+
+// Alerts once per dip: when the selected purity's rate first goes below its alert price.
+// alertedDips records, per purity, the alert price that has already alerted during the current
+// dip. A dip ends when the rate is back at or above the alert price, and saving a different
+// alert price starts over, so either leads to a new alert.
+async function runPriceDropCheck() {
+    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {} } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips']);
+    const isBelow = (p) => Boolean(goldRates[p] && targetRates[p] && goldRates[p] < targetRates[p]);
+    const dips = {};
+    for (const p of Object.keys(PURITY_CODES)) {
+        if (isBelow(p) && alertedDips[p] === targetRates[p]) {
+            dips[p] = targetRates[p];
+        }
     }
+    if (isBelow(purity) && dips[purity] === undefined) {
+        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity]);
+        dips[purity] = targetRates[purity];
+    }
+    await chrome.storage.local.set({ alertedDips: dips });
 }
 
 // This is the notification function which will be called when the gold price decreases.

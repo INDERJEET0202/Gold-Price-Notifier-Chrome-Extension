@@ -19,6 +19,7 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 | `lastError` | background | Message of the last failed fetch, `null` after a success |
 | `purity` | popup | `'24K'` or `'22K'`; defaults to `'24K'` when unset |
 | `targetRates` | popup | `{ '24K'?: number, '22K'?: number }`: a separate alert price for each purity |
+| `alertedDips` | background | `{ '24K'?: number, '22K'?: number }`: for each purity currently below its alert price, the alert price that has already alerted during this dip |
 
 ## When the rate is fetched (`background.js`)
 
@@ -35,12 +36,18 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 
 ## When a notification is sent
 
-`checkPriceDrop()` notifies when `goldRates[purity] < targetRates[purity]` (strictly below). It is called:
+Alerts fire **once per dip**: when the selected purity's rate first goes strictly below its alert price (`goldRates[purity] < targetRates[purity]`).
 
-1. After a successful fetch, but only if the rate for the selected purity differs from the previously stored one. Polling every few hours therefore doesn't repeat the alert while IBJA hasn't published anything new.
-2. When `targetRates` or `purity` changes in storage, i.e. the user saves a target or switches purity.
+- `checkPriceDrop()` runs after every successful fetch, and when `targetRates` or `purity` changes in storage (the user saves a target or switches purity).
+- It queues `runPriceDropCheck()` so checks run one at a time, because each reads and then writes `alertedDips`. Without the queue, a fetch finishing just as the user saves a price could alert twice.
+- `runPriceDropCheck()` drops the `alertedDips` entry of any purity that is no longer below its alert price (the dip is over) or whose alert price changed. It then alerts for the selected purity if it is below and has no entry, and records the alert price.
+- As a result:
+  - further lower rates during the same dip don't alert again;
+  - a recovery to or above the alert price followed by a new drop does alert;
+  - saving a different alert price during a dip alerts once for the new price;
+  - switching purity alerts if that purity is in a dip that hasn't alerted yet.
 
-Every alert uses the notification id `price-drop`, so a new one replaces any that is still showing. While the price stays below the target, the user gets one alert per new IBJA rate, at most about two per working day.
+Every alert uses the notification id `price-drop`, so a new one replaces any that is still showing.
 
 ## Other behaviour
 
