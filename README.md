@@ -6,7 +6,7 @@ Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date wi
 
 ## Setup
 
-1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and select this folder.
+1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and select this folder. A short welcome page opens with these steps.
 2. Open the popup, pick **24K** or **22K**, enter the rate (₹ per 10g) you want to buy at and click **Set alert**. Each purity keeps its own rate, and alerts follow the one you have selected.
 
 No API key or account is needed.

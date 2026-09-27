@@ -40,5 +40,5 @@ Every alert uses the notification id `price-drop`, so a new one replaces any tha
 
 ## Other behaviour
 
-- On install a thank-you tab opens; on update the GitHub repo opens. `runtime.setUninstallURL` sets the goodbye page.
+- On install the built-in `welcome.html` guide opens. Updates open nothing, and there is no uninstall page (updates clear the one that versions before 1.3 set).
 - `PURITY_CODES` maps the popup's purities to IBJA fineness codes: `24K → 999`, `22K → 916`. Adding a purity means adding it there, adding its column to `HISTORY_COLUMNS` if needed, and adding a button to the popup's segmented switch.

@@ -15,18 +15,13 @@ const PURITY_CODES = { '24K': '999', '22K': '916' };
 const HISTORY_COLUMNS = { '999': 1, '995': 2, '916': 3, '750': 4, '585': 5 };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
-chrome.runtime.setUninstallURL('https://thumbs.dreamstime.com/b/time-to-say-goodbye-message-pin-bulletin-board-64928665.jpg');
-
-// Show users some information when they install or update the extension.
+// Show a short getting-started guide on first install. Updates open nothing.
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
-        chrome.tabs.create({
-            url: "https://e1.pxfuel.com/desktop-wallpaper/753/593/desktop-wallpaper-thank-you-top-beautiful-pics-ultra-jpg-you-are-the-best.jpg"
-        });
+        chrome.tabs.create({ url: 'welcome.html' });
     } else if (details.reason === 'update') {
-        chrome.tabs.create({
-            url: "https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension"
-        });
+        // Versions before 1.3 opened a stock "goodbye" image after uninstalling; stop that.
+        chrome.runtime.setUninstallURL('');
     }
     ensureRefreshAlarm();
     refreshIfStale();
