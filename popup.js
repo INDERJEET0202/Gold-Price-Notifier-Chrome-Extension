@@ -1,6 +1,6 @@
 // The background service worker keeps the latest rates in chrome.storage.local,
 // so the popup just renders storage and re-renders whenever it changes.
-const STORAGE_KEYS = ['goldRates', 'rateSession', 'rateDate', 'rateHistory', 'lastFetched', 'lastError', 'purity', 'targetRates'];
+const STORAGE_KEYS = ['goldRates', 'rateSession', 'rateDate', 'rateHistory', 'lastFetched', 'lastError', 'purity', 'targetRates', 'includeGst'];
 const SAVED_FEEDBACK_MS = 1500;
 const CHART_DAYS = 7;
 // Matches the chart's viewBox in popup.html.
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', runFunction);
 async function runFunction() {
     document.getElementById('rate-form').addEventListener('submit', saveUserRate);
     document.querySelectorAll('input[name="purity"]').forEach((radio) => radio.addEventListener('change', savePurity));
+    document.getElementById('include-gst').addEventListener('change', saveIncludeGst);
 
     // Listen before the first read, so a fetch that finishes while the popup opens isn't missed.
     chrome.storage.onChanged.addListener(async (changes, areaName) => {
@@ -25,14 +26,17 @@ async function runFunction() {
     const state = await chrome.storage.local.get(STORAGE_KEYS);
     const purity = state.purity || selectedPurity();
     document.getElementById(`purity-${purity}`).checked = true;
-    fillUserInput(purity, state.targetRates);
+    fillUserInput(purity, state.targetRates, state.includeGst);
     render(state);
 }
 
-function render({ goldRates = {}, rateSession, rateDate, rateHistory = [], lastFetched, lastError, targetRates = {} }) {
+// Amounts are stored without GST; `shown()` converts them for display when the user includes GST.
+function render({ goldRates = {}, rateSession, rateDate, rateHistory = [], lastFetched, lastError, targetRates = {}, includeGst = false }) {
     const purity = selectedPurity();
     const goldRate = goldRates[purity];
     const targetRate = targetRates[purity];
+    const shown = (amount) => withGst(amount, includeGst);
+    document.getElementById('include-gst').checked = includeGst;
 
     const errorBanner = document.getElementById('error-banner');
     errorBanner.hidden = !lastError;
@@ -43,15 +47,17 @@ function render({ goldRates = {}, rateSession, rateDate, rateHistory = [], lastF
     document.getElementById('rate-loading').hidden = !loading;
     const rateValue = document.getElementById('rate-value');
     rateValue.hidden = loading;
-    rateValue.textContent = goldRate ? formatRupees(goldRate) : '—';
+    rateValue.textContent = goldRate ? formatRupees(shown(goldRate)) : '—';
 
-    document.getElementById('rate-label').textContent = `${purity} gold · per 10 g`;
+    document.getElementById('rate-label').textContent = `${purity} gold · per 10 g${includeGst ? ' · incl. GST' : ''}`;
     const session = document.getElementById('rate-session');
     session.hidden = !goldRate;
     session.textContent = `IBJA ${rateSession} rate`;
 
-    document.getElementById('rate-meta').textContent = goldRate && lastFetched ? `${publishedDay(rateDate, lastFetched)} · checked ${timeAgo(lastFetched)}` : '';
-    renderTrend(goldRate ? rateHistory : [], purity, targetRate);
+    document.getElementById('rate-meta').textContent = goldRate && lastFetched
+        ? `${formatRupees(shown(goldRate) / 10)}/g · ${publishedDay(rateDate, lastFetched)} · checked ${timeAgo(lastFetched)}`
+        : '';
+    renderTrend(goldRate ? rateHistory : [], purity, targetRate, shown);
 
     const targetDiff = document.getElementById('target-diff');
     targetDiff.hidden = !(goldRate && targetRate);
@@ -59,22 +65,22 @@ function render({ goldRates = {}, rateSession, rateDate, rateHistory = [], lastF
         const difference = goldRate - targetRate;
         targetDiff.classList.toggle('is-below', difference < 0);
         if (difference < 0) {
-            targetDiff.textContent = `✓ ${formatRupees(-difference)} below your alert price`;
+            targetDiff.textContent = `✓ ${formatRupees(shown(-difference))} below your alert price`;
         } else if (difference === 0) {
             targetDiff.textContent = 'Right at your alert price';
         } else {
-            targetDiff.textContent = `${formatRupees(difference)} above your alert price`;
+            targetDiff.textContent = `${formatRupees(shown(difference))} above your alert price`;
         }
     }
 
     document.getElementById('user-input-label').textContent = `Alert me when ${purity} drops below`;
     document.getElementById('target-hint').textContent = targetRate
-        ? `You'll get a notification when ${purity} is below ${formatRupees(targetRate)}.`
+        ? `You'll get a notification when ${purity} is below ${formatRupees(shown(targetRate))}.`
         : 'No alert set yet.';
 }
 
 // rateHistory has one rate per working day, oldest first, and ends with the current rate.
-function renderTrend(rateHistory, purity, targetRate) {
+function renderTrend(rateHistory, purity, targetRate, shown) {
     const days = rateHistory.filter((day) => day.goldRates?.[purity] > 0).slice(-CHART_DAYS);
     const trend = document.getElementById('rate-trend');
     const chart = document.getElementById('rate-chart');
@@ -84,7 +90,7 @@ function renderTrend(rateHistory, purity, targetRate) {
         return;
     }
 
-    const rates = days.map((day) => day.goldRates[purity]);
+    const rates = days.map((day) => shown(day.goldRates[purity]));
     const [previous, latest] = rates.slice(-2);
     const change = latest - previous;
     const since = `since ${shortDay(days.at(-2).date, days.at(-1).date)}`;
@@ -95,7 +101,7 @@ function renderTrend(rateHistory, purity, targetRate) {
         ? `No change ${since}`
         : `${change < 0 ? '▼' : '▲'} ${formatRupees(Math.abs(change))} (${percent}%) ${since}`;
 
-    const showsTarget = drawChart(rates, targetRate);
+    const showsTarget = drawChart(rates, targetRate && shown(targetRate));
     // Read out by screen readers and shown on hover, e.g. "24K, last 7 working days
     // (Thu, 17 Sept – Today): low ₹1,56,100, high ₹1,58,300. Dashed line: your alert price."
     const summary = `${purity}, last ${rates.length} working days (${formatDay(days[0].date)} – ${formatDay(days.at(-1).date)}): `
@@ -156,24 +162,35 @@ function selectedPurity() {
     return document.querySelector('input[name="purity"]:checked').value;
 }
 
-// Each purity keeps its own target, so show the one for the purity being viewed.
-function fillUserInput(purity, targetRates = {}) {
-    document.getElementById('user-input').value = targetRates[purity] || '';
+// Each purity keeps its own target, so show the one for the purity being viewed, with GST if
+// the user includes it.
+function fillUserInput(purity, targetRates = {}, includeGst = false) {
+    const targetRate = targetRates[purity];
+    document.getElementById('user-input').value = targetRate ? Math.round(withGst(targetRate, includeGst)) : '';
 }
 
 async function savePurity() {
     const purity = selectedPurity();
-    const { targetRates } = await chrome.storage.local.get('targetRates');
-    fillUserInput(purity, targetRates);
+    const { targetRates, includeGst } = await chrome.storage.local.get(['targetRates', 'includeGst']);
+    fillUserInput(purity, targetRates, includeGst);
     // background.js watches storage and checks the price for the new purity.
     await chrome.storage.local.set({ purity });
 }
 
+async function saveIncludeGst() {
+    const includeGst = document.getElementById('include-gst').checked;
+    const { targetRates } = await chrome.storage.local.get('targetRates');
+    fillUserInput(selectedPurity(), targetRates, includeGst);
+    await chrome.storage.local.set({ includeGst });
+}
+
 async function saveUserRate(event) {
     event.preventDefault();
-    const targetRate = Number(document.getElementById('user-input').value);
-    if (targetRate > 0) {
-        const { targetRates = {} } = await chrome.storage.local.get('targetRates');
+    const enteredRate = Number(document.getElementById('user-input').value);
+    if (enteredRate > 0) {
+        const { targetRates = {}, includeGst = false } = await chrome.storage.local.get(['targetRates', 'includeGst']);
+        // Store it without GST, like the rates, rounded to paise so it shows back as entered.
+        const targetRate = includeGst ? Math.round(enteredRate / (1 + GST_RATE) * 100) / 100 : enteredRate;
         // background.js watches storage and checks the price as soon as this changes.
         await chrome.storage.local.set({ targetRates: { ...targetRates, [selectedPurity()]: targetRate } });
         showSaved();

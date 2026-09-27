@@ -33,6 +33,7 @@ npm test
 - IBJA has no public API, so the rate is read from the ibjarates.com page. If the site changes its layout, the popup shows an error until the parser is updated.
 - Users pick a purity and input a gold rate for it; these are saved in `chrome.storage.local` along with the latest rates.
 - When the rate for the selected purity drops below the user given rate, the extension sends a notification that Gold Price Dropped. It alerts once per dip: not again while the price stays below, but again after it recovers and drops once more, or when the user sets a new alert price. Clicking the notification opens ibjarates.com.
+- IBJA rates exclude GST. The popup's **Include 3% GST** switch shows every price with GST instead, in the popup, on the toolbar icon and in alerts. The popup also shows the price per gram. Alert prices are stored without GST, so switching never changes when an alert fires.
 - The popup shows how the rate changed since the previous working day ("▼ ₹420 (0.27%) since Thu") and a sparkline of the last 7 working days, with the alert price as a dashed line. The extension keeps the last 10 working days' rates, taken from the page's history tables and from its own fetches.
 - The toolbar icon shows the selected purity's rate in thousands ("158K" for ₹1,57,739, since Chrome's badge only fits about four characters) and turns green while it's below the user's rate. Hovering the icon shows the full rate.
 
@@ -59,12 +60,13 @@ function parseIbjaRates(html) {
 ### Notification Function
 
 ```javascript
-function priceDropAlertNotifi(purity, goldRate, targetRate) {
-    chrome.notifications.create('price-drop', {
+function priceDropAlertNotifi(purity, goldRate, targetRate, includeGst = false) {
+    const basis = includeGst ? ' incl. GST' : '';
+    chrome.notifications.create(PRICE_DROP_NOTIFICATION, {
         type: 'basic',
         iconUrl: 'Icons/logo.png',
         title: 'Gold Price Drop Alert',
-        message: `${purity} gold is now ${formatRupees(goldRate)}/10g, below your rate of ${formatRupees(targetRate)}/10g. Buy Gold now!`
+        message: `${purity} gold is now ${formatRupees(withGst(goldRate, includeGst))}/10g${basis}, below your rate of ${formatRupees(withGst(targetRate, includeGst))}/10g. Buy Gold now!`
     }, function (notificationId) {
         console.log('Notification sent with ID:', notificationId);
     });
@@ -75,8 +77,8 @@ function priceDropAlertNotifi(purity, goldRate, targetRate) {
 The price is checked after every fetch and whenever the user changes their purity or rate. `alertedDips` remembers which alert price has already fired during the current dip, so each dip sends one notification.
 ```javascript
 async function runPriceDropCheck() {
-    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {} } =
-        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips']);
+    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {}, includeGst = false } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips', 'includeGst']);
     const isBelow = (p) => Boolean(goldRates[p] && targetRates[p] && goldRates[p] < targetRates[p]);
     const dips = {};
     for (const p of Object.keys(PURITY_CODES)) {
@@ -85,7 +87,7 @@ async function runPriceDropCheck() {
         }
     }
     if (isBelow(purity) && dips[purity] === undefined) {
-        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity]);
+        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity], includeGst);
         dips[purity] = targetRates[purity];
     }
     await chrome.storage.local.set({ alertedDips: dips });

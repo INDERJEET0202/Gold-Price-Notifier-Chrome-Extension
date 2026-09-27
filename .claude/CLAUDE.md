@@ -16,7 +16,7 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 | `popup.html`, `popup.css`, `popup.js` | Toolbar popup. Renders what is in storage and saves the user's purity and target rates. |
 | `welcome.html`, `welcome.css` | Getting-started page opened once on install. Static, no script. |
 | `theme.css` | Colour variables (light and dark) and base styles shared by the popup and the welcome page. |
-| `format.js` | `formatRupees()`, shared by the service worker (`importScripts`) and the popup (`<script>`). |
+| `format.js` | `formatRupees()`, `GST_RATE` and `withGst()`, shared by the service worker (`importScripts`) and the popup (`<script>`). |
 | `Icons/logo.png` | Notification icon. The `logo*.png` files in the root are the extension icons. |
 | `README.md` | User-facing overview. Its code snippets are copies of functions in `background.js`; update them when those functions change. |
 | `tests/` | Playwright end-to-end tests: `fixtures.js` (launches Chromium with the extension, plus helpers), `ibja-pages.js` (fake ibjarates.com pages), and `*.spec.js`. |
@@ -27,7 +27,7 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 - Keep the extension dependency-free: no runtime npm packages, bundlers, frameworks, or remote scripts, stylesheets or fonts. MV3's CSP blocks remote scripts and the popup has to work offline. Ask before adding any of these. (`@playwright/test` is a dev dependency for the tests only.)
 - Run `npm test` before committing, and add or update tests for any behaviour change. Setup is `npm install`, plus `npx playwright install chromium` on a machine without Playwright's Chromium (cloud sessions have it preinstalled).
 - Code style: 4-space indentation, single quotes, semicolons, `async`/`await`, and short comments that explain why rather than what. Match the surrounding code.
-- Show every rupee amount through `formatRupees()` so it uses Indian digit grouping (₹1,57,739).
+- Show every rupee amount through `formatRupees()` so it uses Indian digit grouping (₹1,57,739), and through `withGst(amount, includeGst)` first, so it follows the user's GST choice. Rates and alert prices are always stored without GST.
 - The default branch is `master`.
 - To try a change: open `chrome://extensions`, turn on Developer mode, click "Load unpacked" and choose the repo root. After editing, click the reload icon on the extension's card and reopen the popup.
 - `manifest.json` `version` is bumped for user-visible releases (currently 1.2.0).

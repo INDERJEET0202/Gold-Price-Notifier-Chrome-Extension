@@ -60,7 +60,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     if (changes.targetRates || changes.purity) {
         checkPriceDrop();
     }
-    if (changes.goldRates || changes.targetRates || changes.purity) {
+    if (changes.goldRates || changes.targetRates || changes.purity || changes.includeGst) {
         updateBadge();
     }
 });
@@ -243,8 +243,8 @@ function checkPriceDrop() {
 // dip. A dip ends when the rate is back at or above the alert price, and saving a different
 // alert price starts over, so either leads to a new alert.
 async function runPriceDropCheck() {
-    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {} } =
-        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips']);
+    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {}, includeGst = false } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips', 'includeGst']);
     const isBelow = (p) => Boolean(goldRates[p] && targetRates[p] && goldRates[p] < targetRates[p]);
     const dips = {};
     for (const p of Object.keys(PURITY_CODES)) {
@@ -253,19 +253,21 @@ async function runPriceDropCheck() {
         }
     }
     if (isBelow(purity) && dips[purity] === undefined) {
-        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity]);
+        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity], includeGst);
         dips[purity] = targetRates[purity];
     }
     await chrome.storage.local.set({ alertedDips: dips });
 }
 
 // This is the notification function which will be called when the gold price decreases.
-function priceDropAlertNotifi(purity, goldRate, targetRate) {
+// Prices are shown with GST if the user chose that in the popup.
+function priceDropAlertNotifi(purity, goldRate, targetRate, includeGst = false) {
+    const basis = includeGst ? ' incl. GST' : '';
     chrome.notifications.create(PRICE_DROP_NOTIFICATION, {
         type: 'basic',
         iconUrl: 'Icons/logo.png',
         title: 'Gold Price Drop Alert',
-        message: `${purity} gold is now ${formatRupees(goldRate)}/10g, below your rate of ${formatRupees(targetRate)}/10g. Buy Gold now!`
+        message: `${purity} gold is now ${formatRupees(withGst(goldRate, includeGst))}/10g${basis}, below your rate of ${formatRupees(withGst(targetRate, includeGst))}/10g. Buy Gold now!`
     }, function (notificationId) {
         console.log('Notification sent with ID:', notificationId);
     });
@@ -283,22 +285,23 @@ function openIbjaFromNotification(notificationId) {
 // (Chrome only has room for about four characters), green while it's below the alert price.
 // Hovering the icon shows the full rate.
 async function updateBadge() {
-    const { goldRates = {}, targetRates = {}, purity = '24K', rateSession } =
-        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'rateSession']);
+    const { goldRates = {}, targetRates = {}, purity = '24K', rateSession, includeGst = false } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'rateSession', 'includeGst']);
     const goldRate = goldRates[purity];
     const targetRate = targetRates[purity];
     const belowTarget = Boolean(goldRate && targetRate && goldRate < targetRate);
+    const shown = (amount) => withGst(amount, includeGst);
 
     let title = 'Gold Price Drop Notifier';
     if (goldRate) {
-        title = `${purity} gold: ${formatRupees(goldRate)}/10g (IBJA ${rateSession} rate)`;
+        title = `${purity} gold: ${formatRupees(shown(goldRate))}/10g${includeGst ? ' incl. GST' : ''} (IBJA ${rateSession} rate)`;
         if (targetRate) {
             title += belowTarget
-                ? `\n${formatRupees(targetRate - goldRate)} below your alert price`
-                : `\nAlert when it drops below ${formatRupees(targetRate)}`;
+                ? `\n${formatRupees(shown(targetRate - goldRate))} below your alert price`
+                : `\nAlert when it drops below ${formatRupees(shown(targetRate))}`;
         }
     }
-    await chrome.action.setBadgeText({ text: goldRate ? `${Math.round(goldRate / 1000)}K` : '' });
+    await chrome.action.setBadgeText({ text: goldRate ? `${Math.round(shown(goldRate) / 1000)}K` : '' });
     await chrome.action.setBadgeBackgroundColor({ color: belowTarget ? BADGE_COLOR_BELOW_TARGET : BADGE_COLOR });
     await chrome.action.setBadgeTextColor({ color: '#ffffff' });
     await chrome.action.setTitle({ title });
