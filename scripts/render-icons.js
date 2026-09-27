@@ -15,6 +15,7 @@ const ICONS = [
     ['logo48x48.png', 48, 0],
     ['logo128x128.png', 128, 16],
     ['Icons/logo.png', 256, 0], // Notification icon.
+    ['docs/logo.png', 256, 0], // For the goodbye page on GitHub Pages, which can't reach Icons/.
 ];
 
 (async () => {

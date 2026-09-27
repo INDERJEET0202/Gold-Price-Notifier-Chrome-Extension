@@ -22,6 +22,7 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 | `README.md` | User-facing overview. Its code snippets are copies of functions in `background.js`; update them when those functions change. |
 | `tests/` | Playwright end-to-end tests: `fixtures.js` (launches Chromium with the extension, plus helpers), `ibja-pages.js` (fake ibjarates.com pages), and `*.spec.js`. |
 | `package.json`, `playwright.config.js`, `scripts/` | Dev-only tooling: the tests, `npm run icons`, `npm run package` (`scripts/package.js`, the Web Store zip in `dist/`) and `npm run store-images`. `@playwright/test` is the only npm package. |
+| `docs/` | The public website, served by GitHub Pages (not the context docs, which are in `.claude/docs/`): `goodbye.html`, the page Chrome opens after the extension is removed, and its `logo.png` (rendered by `npm run icons`). Self-contained: inline CSS, no scripts. |
 | `store/`, `PRIVACY.md` | Chrome Web Store listing: `store/listing.md` (every dashboard field), the generated store images, and the privacy policy the listing links to. |
 
 ## Working on this repo

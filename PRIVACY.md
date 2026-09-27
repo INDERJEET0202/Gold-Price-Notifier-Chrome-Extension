@@ -21,6 +21,8 @@ To read the rate, the extension loads `https://ibjarates.com/`, the website of t
 
 Clicking a price alert or the ibjarates.com link opens that website in a tab, as a normal visit.
 
+When you remove the extension, Chrome opens a goodbye page at `inderjeet0202.github.io`, hosted by GitHub Pages. It is a static page with no scripts and no tracking, and Chrome sends it nothing about you or your settings. Its feedback buttons open GitHub only if you click one.
+
 The extension contacts no other server.
 
 ## What it shares

@@ -81,6 +81,10 @@ Leave **Official URL** empty; it needs a domain verified in Google Search Consol
 - Visibility: Public
 - Regions: All regions (the rates are Indian, but Indians abroad follow them too)
 
+## After publishing
+
+Replace the **Reinstall** link in `docs/goodbye.html` (currently a store search for the name) with the listing's own address, `https://chromewebstore.google.com/detail/<item id>`.
+
 ## Test instructions tab
 
 Nothing needed: there is no login, and the extension works as soon as it's installed.
