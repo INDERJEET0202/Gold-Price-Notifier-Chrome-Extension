@@ -10,7 +10,10 @@
 4. Rate card (`.rate-card`):
    - `#rate-label` ("24K gold · per 10 g") and the `#rate-session` pill ("IBJA PM rate");
    - `#rate-loading`: a shimmer shown until the first fetch finishes;
-   - `#rate-value`: the price, or "—" when the first fetch failed;
+   - `.rate-row`: `#rate-value`, the price (or "—" when the first fetch failed), with the `#rate-chart` sparkline beside it;
+   - `#rate-chart`: an inline SVG (120×40 viewBox) of the last 7 days of `rateHistory` for the selected purity, drawn by `drawChart()`. It has a shaded area, a line and an end dot, plus a dashed `--good` line at the alert price when that is within the rates' range (or 1%) of them. Its `aria-label` and `<title>` (hover) give the date range, low and high. It sits beside the price, not below it, because Chrome caps the popup at 600px high;
+   - `#rate-trend`: "▼ ₹420 (0.27%) since Thu" (green, `.is-down`) or "▲ …" (`--warn`, `.is-up`), comparing the last two days of `rateHistory`. It names the date ("since 15 Sept") when the previous rate is a week or more older;
+   - the chart and the trend are hidden until `rateHistory` has 2 days;
    - `#rate-meta`: "Today · checked 5 min ago", or "Fri, 25 Sept · checked 2 h ago" when the rate is from an earlier day;
    - `#target-diff`: "✓ ₹261 below your alert price" (green, `.is-below`) or "₹739 above your alert price".
 5. Alert form `#rate-form`: `#user-input-label` ("Alert me when 24K drops below"), `#user-input` (number) with a ₹ prefix, the `#submit` button ("Set alert", which shows "Saved ✓" for 1.5 s after saving) and `#target-hint`.
@@ -31,3 +34,5 @@
 - The popup window's outer corners and frame are drawn by Chrome and can't be changed by the extension, which is why the content sits in the rounded `.app` panel on the `--frame` background.
 - Shape language: pills (`border-radius: 999px`) for the switch, input and button; 20px for the rate card; 14px for the banner.
 - Flex children that contain inputs need `min-width: 0`, otherwise the input's intrinsic width pushes the row past 360px.
+- Chrome caps the popup at 600px high and scrolls anything taller. With the error banner showing a long message, the popup is about 580px, so new UI must not add height. The layout test checks this.
+- SVG elements have no `.hidden` property, so toggle the attribute instead (`toggleAttribute('hidden', …)`).

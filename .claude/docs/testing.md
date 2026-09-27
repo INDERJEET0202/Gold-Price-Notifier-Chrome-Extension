@@ -20,10 +20,11 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/ibja-pages.js` | `ibjaPage({ am, pm, amHistory, pmHistory })` builds fake ibjarates.com pages; `saturdayPage` is a ready-made weekend page |
 | `tests/parsing.spec.js` | PM/AM selection, the weekend/holiday history fallback, date formats, error messages, keeping the last good rates |
 | `tests/alerts.spec.js` | When notifications are and aren't sent, and their text |
-| `tests/popup.spec.js` | Every popup state, saving targets, the purity switch, layout width and both themes |
+| `tests/popup.spec.js` | Every popup state, saving targets, the purity switch, layout width and height, and both themes |
 | `tests/lifecycle.spec.js` | Install alarm and fetch, surviving a browser restart |
 | `tests/refresh-schedule.spec.js` | How often `refreshIfStale(now)` fetches inside and outside IBJA's publishing windows and at weekends |
 | `tests/welcome.spec.js` | The welcome page opening on install and fitting the window |
+| `tests/trend.spec.js` | `rateHistory` (merging, PM over AM, dates in India, the 10-day limit) and the popup's trend line and sparkline |
 | `tests/badge.spec.js` | The toolbar badge's text, colour and tooltip, following the purity and alert price, and after a restart |
 | `tests/notification-click.spec.js` | Clicking a price alert opens ibjarates.com (calls the `onClicked` handler directly, since tests can't click a desktop notification) |
 
@@ -34,7 +35,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 - **Waiting for the worker:** `Extension.attach()` waits until `chrome.*` and `background.js` are ready, because Playwright can reach the worker before Chrome has run it (this made tests flaky before).
 - **Missed workers:** under load (e.g. `--workers=6`), Playwright sometimes never reports a service worker that started during browser launch, although it is running. If none is reported within 10 seconds, `findServiceWorker()` stops and starts it from `chrome://serviceworker-internals`, and Playwright then attaches to it.
 - **`extension.serveIbja(html, status)`** replaces `fetch` inside the service worker for ibjarates.com URLs. Other URLs pass through, because `chrome.notifications` loads its icon with `fetch`.
-- **Driving the worker:** `extension.refresh()` and `extension.refreshIfStale(now)` call the worker's own top-level functions; pass `now` (e.g. `'2026-09-28T06:45:00Z'`) to test the schedule at a fixed time. `storage()`, `setStorage()` (replaces everything) and `updateStorage()` (merges, like the popup does) read and write `chrome.storage.local`.
+- **Driving the worker:** `extension.refresh(now)` and `extension.refreshIfStale(now)` call the worker's own top-level functions. Pass `now` (e.g. `'2026-09-28T06:45:00Z'`) to test the schedule, or which date a rate is filed under, at a fixed time. `storage()`, `setStorage()` (replaces everything) and `updateStorage()` (merges, like the popup does) read and write `chrome.storage.local`.
 - **Notifications:** `chrome.notifications.create` is wrapped to record messages. `notifications()` returns them and `clearNotifications()` resets the list. Alerts triggered through storage changes are asynchronous, so check them with `expect.poll(...)`, and call `extension.settle()` before asserting that nothing was sent.
 - **Popup:** `extension.openPopup({ colorScheme })` opens `popup.html` at 376px wide. Uncaught popup errors fail the test automatically.
 

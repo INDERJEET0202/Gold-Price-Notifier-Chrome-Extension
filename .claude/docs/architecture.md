@@ -15,6 +15,7 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 | `goldRates` | background | `{ '24K': number, '22K': number }` in ₹ per 10 g, rounded |
 | `rateSession` | background | `'AM'` or `'PM'`: which IBJA rate the numbers are |
 | `rateDate` | background | `'YYYY-MM-DD'` when the rate came from the history tables (no rate on the day of the fetch), otherwise `null` |
+| `rateHistory` | background | `[{ date: 'YYYY-MM-DD', goldRates: { '24K', '22K' } }, …]`: one rate per working day, oldest first, at most `HISTORY_DAYS` (10). The last entry is the current rate. Feeds the popup's trend and chart. |
 | `lastFetched` | background | `Date.now()` of the last successful fetch. Not updated on failure. |
 | `lastError` | background | Message of the last failed fetch, `null` after a success |
 | `purity` | popup | `'24K'` or `'22K'`; defaults to `'24K'` when unset |
@@ -31,6 +32,8 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 - It runs on `runtime.onInstalled` (install, update or reload), on `runtime.onStartup`, and on an hourly `chrome.alarms` alarm named `refresh-gold-rate` (`ALARM_PERIOD_MINUTES = 60`).
 - `ensureRefreshAlarm()` recreates the alarm on install and startup, because Chrome doesn't guarantee alarms survive a browser restart.
 - A failed fetch leaves `lastFetched` unchanged, so it is retried at the next hourly alarm.
+- Each successful fetch merges into `rateHistory` (`mergeRateHistory()`): every day in the page's history tables, then the current rate at `rateDate`, or at today's date in India (`istDate()`) when it is today's rate. Later entries replace earlier ones for the same date. The stored copy means the chart fills up over time even if the page shows only a few days.
+- `refreshGoldRate(now)` and `refreshIfStale(now)` take the time as a parameter so tests can fix it.
 - Opening the popup never fetches. It only renders storage.
 - Nothing runs while Chrome is closed.
 

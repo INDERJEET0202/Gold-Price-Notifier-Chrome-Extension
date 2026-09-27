@@ -154,6 +154,63 @@ main {
     color: var(--muted);
 }
 
+/* The price with a sparkline of the last 7 working days beside it (drawn by drawChart() in
+   popup.js), so the trend costs no extra height: Chrome caps the popup at 600px. */
+.rate-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.rate-chart {
+    flex: 0 1 120px;
+    min-width: 0;
+    height: 40px;
+    overflow: visible;
+}
+
+.chart-area {
+    fill: var(--accent-soft);
+}
+
+.chart-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chart-target {
+    stroke: var(--good);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+
+.chart-dot {
+    fill: var(--accent);
+    stroke: var(--surface);
+    stroke-width: 2;
+}
+
+/* Change since the previous working day: down is good news for a buyer. */
+.rate-trend {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.rate-trend.is-down {
+    color: var(--good);
+}
+
+.rate-trend.is-up {
+    color: var(--warn);
+}
+
 .target-diff {
     margin: 12px 0 0;
     padding-top: 12px;

@@ -32,7 +32,7 @@ This structure comes from two open-source scrapers (github.com/the-solipsist/IBJ
 ## Parsing order (`parseIbjaRates` in `background.js`)
 
 1. `parseTodayRates()`: the PM spans if both 24K and 22K have a value, otherwise the AM spans. Both purities always come from the same session. Sets `rateDate` to `null`.
-2. `parseLatestHistoryRates()`: when today's spans are empty, the row with the latest parseable date that has both 999 and 916 values. PM is read first, so PM wins over AM for the same day. Sets `rateDate` to that day as `YYYY-MM-DD`.
+2. `parseLatestHistoryRates()`: when today's spans are empty, the latest day from `parseHistoryDays()`. That function returns every row with a parseable date and both 999 and 916 values, oldest first. PM is read first, so PM wins over AM for the same day. Sets `rateDate` to that day as `YYYY-MM-DD`. (`parseHistoryDays()` also feeds `rateHistory`.)
 3. Otherwise it throws. If the page contains "not published", the message explains that IBJA hasn't published today; any other page gets "the 24K and 22K rates are missing from ibjarates.com (the page may have changed)".
 
 Any error is stored in `lastError` and shown in the popup; the last good rates stay in storage.
