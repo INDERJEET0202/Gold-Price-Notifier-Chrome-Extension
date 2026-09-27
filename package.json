@@ -4,7 +4,9 @@
   "description": "Dev-only tooling for the Gold Price Drop Notifier Chrome extension. The extension itself has no dependencies.",
   "scripts": {
     "test": "playwright test",
-    "icons": "node scripts/render-icons.js"
+    "icons": "node scripts/render-icons.js",
+    "package": "node scripts/package.js",
+    "store-images": "node scripts/store-images.js"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1"

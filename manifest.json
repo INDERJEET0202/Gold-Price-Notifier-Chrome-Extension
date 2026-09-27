@@ -1,14 +1,16 @@
 {
     "manifest_version": 3,
     "name": "Gold Price Drop Notifier",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "icons": {
         "16": "logo16x16.png",
         "32": "logo32x32.png",
         "48": "logo48x48.png",
         "128": "logo128x128.png"
     },
-    "description": "Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date with the latest gold prices and notifies you when the gold price drops below your specified rate. Simply set your desired gold price in the extension settings and let it do the rest.",
+    "description": "India's IBJA gold rate for 24K and 22K on your toolbar, with a desktop alert when it drops below your target price.",
+    "homepage_url": "https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension",
+    "minimum_chrome_version": "110",
     "permissions": [
         "alarms",
         "notifications",

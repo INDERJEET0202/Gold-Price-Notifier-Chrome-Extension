@@ -5,12 +5,12 @@ const { test: base, expect, chromium } = require('@playwright/test');
 
 const EXTENSION_PATH = path.join(__dirname, '..');
 
-function launchBrowser(userDataDir) {
+function launchBrowser(userDataDir, extensionPath = EXTENSION_PATH) {
     return chromium.launchPersistentContext(userDataDir, {
         channel: 'chromium', // Extensions only load in Chromium's new headless mode.
         args: [
-            `--disable-extensions-except=${EXTENSION_PATH}`,
-            `--load-extension=${EXTENSION_PATH}`,
+            `--disable-extensions-except=${extensionPath}`,
+            `--load-extension=${extensionPath}`,
             // Block all DNS so nothing, including the extension's own fetch on install, reaches
             // the real ibjarates.com. Tests serve fake pages with serveIbja() instead.
             '--host-resolver-rules=MAP * ~NOTFOUND',

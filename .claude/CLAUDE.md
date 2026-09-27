@@ -21,7 +21,8 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 | `Icons/logo.png`, `logo*.png` | Rendered from `Icons/logo.svg` by `npm run icons` (`scripts/render-icons.js`); never edit them by hand. `Icons/logo.png` (256px) is the notification icon and the logo in the popup and welcome page; `logo16x16`–`logo128x128.png` are the manifest icons (the 128px one has the Web Store's 16px padding). |
 | `README.md` | User-facing overview. Its code snippets are copies of functions in `background.js`; update them when those functions change. |
 | `tests/` | Playwright end-to-end tests: `fixtures.js` (launches Chromium with the extension, plus helpers), `ibja-pages.js` (fake ibjarates.com pages), and `*.spec.js`. |
-| `package.json`, `playwright.config.js`, `scripts/` | Dev-only tooling: the tests and `npm run icons`. `@playwright/test` is the only npm package. |
+| `package.json`, `playwright.config.js`, `scripts/` | Dev-only tooling: the tests, `npm run icons`, `npm run package` (`scripts/package.js`, the Web Store zip in `dist/`) and `npm run store-images`. `@playwright/test` is the only npm package. |
+| `store/`, `PRIVACY.md` | Chrome Web Store listing: `store/listing.md` (every dashboard field), the generated store images, and the privacy policy the listing links to. |
 
 ## Working on this repo
 
@@ -31,7 +32,8 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 - Show every rupee amount through `formatRupees()` so it uses Indian digit grouping (₹1,57,739), and through `withGst(amount, includeGst)` first, so it follows the user's GST choice. Rates and alert prices are always stored without GST.
 - The default branch is `master`.
 - To try a change: open `chrome://extensions`, turn on Developer mode, click "Load unpacked" and choose the repo root. After editing, click the reload icon on the extension's card and reopen the popup.
-- `manifest.json` `version` is bumped for user-visible releases (currently 1.2.0).
+- `manifest.json` `version` is bumped for user-visible releases (currently 1.3.0). The manifest `description` is the store summary and must stay within 132 characters. `minimum_chrome_version` is 110, for `chrome.action.setBadgeTextColor`; raise it if you use a newer API.
+- A new file the extension loads must be added to `PACKAGE_FILES` in `scripts/package.js`; `tests/package.spec.js` fails otherwise. Keep `PRIVACY.md` and `store/listing.md` (permission justifications, data use) true when behaviour, permissions or stored data change, and run `npm run store-images` after visible popup changes.
 
 ## Gotchas
 

@@ -27,6 +27,17 @@ To change the icon, edit `Icons/logo.svg` and run `npm run icons` to render the 
 `npm install` creates a `node_modules/` folder inside the extension folder. Loading the folder in Chrome still works; the extension doesn't use those files.
 
 
+## Publishing to the Chrome Web Store
+
+1. Register as a developer in the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole). It costs a one-time US$5 fee (no yearly fee), and the Google account needs 2-Step Verification.
+2. Run `npm run package`. It writes `dist/gold-price-drop-notifier-<version>.zip` with only the files the extension needs.
+3. In the dashboard, click **New item** and upload the zip.
+4. Fill in the **Store listing**, **Privacy practices** and **Distribution** tabs from [`store/listing.md`](store/listing.md), and upload the images in [`store/`](store). The privacy policy is [`PRIVACY.md`](PRIVACY.md).
+5. Submit for review. Reviews usually take a few days.
+
+For an update, bump `version` in `manifest.json`, run `npm run package` again, and upload the zip on the item's **Package** tab. `npm run store-images` regenerates the store images after a UI change.
+
+
 ## Backend ?
 
 - Takes the 24K (999) and 22K (916) gold rates from [IBJA](https://ibjarates.com) (India Bullion and Jewellers Association), India's benchmark rate. It's in ₹ per 10g and includes import duty but not GST or making charges.
