@@ -4,7 +4,7 @@
 
 ## Layout and element ids
 
-1. Header: `logo48x48.png`, the extension name and "India's IBJA benchmark rate".
+1. Header: `Icons/logo.png` at 36px (not cropped: the icon has transparent corners and a badge at the bottom right), the extension name and "India's IBJA benchmark rate".
 2. Purity switch: radio inputs `#purity-24K` and `#purity-22K` (`name="purity"`) styled as a pill-shaped segmented control (`.segmented`).
 3. `#error-banner`: shown while `lastError` is set; the last good rate stays visible below it.
 4. Rate card (`.rate-card`):

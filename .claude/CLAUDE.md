@@ -17,10 +17,11 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 | `welcome.html`, `welcome.css` | Getting-started page opened once on install. Static, no script. |
 | `theme.css` | Colour variables (light and dark) and base styles shared by the popup and the welcome page. |
 | `format.js` | `formatRupees()`, `GST_RATE` and `withGst()`, shared by the service worker (`importScripts`) and the popup (`<script>`). |
-| `Icons/logo.png` | Notification icon. The `logo*.png` files in the root are the extension icons. |
+| `Icons/logo.svg` | Source of every icon: a gold rupee coin with a green "price down" badge, drawn with shapes only (no fonts, no stock images). |
+| `Icons/logo.png`, `logo*.png` | Rendered from `Icons/logo.svg` by `npm run icons` (`scripts/render-icons.js`); never edit them by hand. `Icons/logo.png` (256px) is the notification icon and the logo in the popup and welcome page; `logo16x16`–`logo128x128.png` are the manifest icons (the 128px one has the Web Store's 16px padding). |
 | `README.md` | User-facing overview. Its code snippets are copies of functions in `background.js`; update them when those functions change. |
 | `tests/` | Playwright end-to-end tests: `fixtures.js` (launches Chromium with the extension, plus helpers), `ibja-pages.js` (fake ibjarates.com pages), and `*.spec.js`. |
-| `package.json`, `playwright.config.js` | Dev-only test tooling. `@playwright/test` is the only npm package. |
+| `package.json`, `playwright.config.js`, `scripts/` | Dev-only tooling: the tests and `npm run icons`. `@playwright/test` is the only npm package. |
 
 ## Working on this repo
 

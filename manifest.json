@@ -24,6 +24,9 @@
     "action": {
         "default_popup": "popup.html",
         "default_title": "Gold Price Drop Notifier",
-        "default_icon": "logo16x16.png"
+        "default_icon": {
+            "16": "logo16x16.png",
+            "32": "logo32x32.png"
+        }
     }
 }

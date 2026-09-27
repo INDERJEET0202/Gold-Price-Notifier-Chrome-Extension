@@ -22,6 +22,8 @@ npx playwright install chromium   # first time only
 npm test
 ```
 
+To change the icon, edit `Icons/logo.svg` and run `npm run icons` to render the PNG sizes.
+
 `npm install` creates a `node_modules/` folder inside the extension folder. Loading the folder in Chrome still works; the extension doesn't use those files.
 
 
