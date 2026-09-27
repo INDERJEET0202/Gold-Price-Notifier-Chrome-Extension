@@ -7,8 +7,15 @@ importScripts('format.js');
 // twice each working day, an AM rate around noon and a PM rate around 5-6 PM IST.
 const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
-const REFRESH_INTERVAL_MS = 3 * 60 * 60 * 1000; // Often enough to pick up both daily IBJA rates.
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
+const HOUR_MS = 60 * 60 * 1000;
+const IST_OFFSET_MS = 5.5 * HOUR_MS; // India has no daylight saving.
+// Minutes after midnight IST around the AM and PM publications, when we check every hour.
+const PUBLISHING_WINDOWS_IST = [[11 * 60 + 30, 14 * 60], [16 * 60 + 30, 19 * 60 + 30]];
+// Just under the alarm period, so every hourly alarm inside a window refreshes.
+const REFRESH_IN_WINDOW_MS = 55 * 60 * 1000;
+const REFRESH_ON_WEEKDAYS_MS = 6 * HOUR_MS;
+const REFRESH_ON_WEEKENDS_MS = 12 * HOUR_MS; // IBJA doesn't publish on Saturdays and Sundays.
 // The purities the popup offers, mapped to IBJA's fineness codes.
 const PURITY_CODES = { '24K': '999', '22K': '916' };
 // Column of each fineness in IBJA's history tables: date, 999, 995, 916, 750, 585, silver.
@@ -53,11 +60,24 @@ async function ensureRefreshAlarm() {
     }
 }
 
-async function refreshIfStale() {
+async function refreshIfStale(now = Date.now()) {
     const { lastFetched = 0 } = await chrome.storage.local.get('lastFetched');
-    if (Date.now() - lastFetched >= REFRESH_INTERVAL_MS) {
+    if (now - lastFetched >= refreshIntervalMs(now)) {
         await refreshGoldRate();
     }
+}
+
+// How old the stored rate may get before we fetch again: hourly around IBJA's publishing
+// times on weekdays, so alerts arrive soon after a new rate, and rarely otherwise.
+function refreshIntervalMs(now) {
+    const ist = new Date(now + IST_OFFSET_MS); // Read with getUTC*() to get IST fields.
+    const day = ist.getUTCDay();
+    if (day === 0 || day === 6) {
+        return REFRESH_ON_WEEKENDS_MS;
+    }
+    const minutes = ist.getUTCHours() * 60 + ist.getUTCMinutes();
+    const inWindow = PUBLISHING_WINDOWS_IST.some(([start, end]) => minutes >= start && minutes < end);
+    return inWindow ? REFRESH_IN_WINDOW_MS : REFRESH_ON_WEEKDAYS_MS;
 }
 
 // Fetch today's 24K and 22K gold rates from ibjarates.com

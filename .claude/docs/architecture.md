@@ -22,7 +22,11 @@ ibjarates.com ──fetch──► background.js ──set──► chrome.stora
 
 ## When the rate is fetched (`background.js`)
 
-- `refreshIfStale()` fetches only if `lastFetched` is more than `REFRESH_INTERVAL_MS` (3 hours) old.
+- `refreshIfStale(now)` fetches only if `lastFetched` is older than `refreshIntervalMs(now)`:
+  - 55 minutes inside IBJA's publishing windows on weekdays (11:30–14:00 and 16:30–19:30 IST, `PUBLISHING_WINDOWS_IST`), so every hourly alarm there fetches and a new rate is picked up within about an hour;
+  - 6 hours at other times on weekdays;
+  - 12 hours on Saturdays and Sundays.
+  That is about 10 requests on a weekday and 2 on a weekend day. IST is computed with a fixed +5:30 offset (India has no daylight saving).
 - It runs on `runtime.onInstalled` (install, update or reload), on `runtime.onStartup`, and on an hourly `chrome.alarms` alarm named `refresh-gold-rate` (`ALARM_PERIOD_MINUTES = 60`).
 - `ensureRefreshAlarm()` recreates the alarm on install and startup, because Chrome doesn't guarantee alarms survive a browser restart.
 - A failed fetch leaves `lastFetched` unchanged, so it is retried at the next hourly alarm.

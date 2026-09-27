@@ -4,7 +4,7 @@
 
 - IBJA (India Bullion and Jewellers Association) publishes India's benchmark gold rate, widely used as the reference price in India. It includes import duty but not GST (3%) or making charges.
 - IBJA publishes an AM rate around noon and a PM rate around 5-6 PM IST on working days, and nothing on Saturdays, Sundays or central government holidays ("Rates are not published on Central Govt. Holidays & SAT/SUN").
-- The extension fetches `https://ibjarates.com/`. There is no official API, so the HTML is scraped. The site has no robots.txt; the 3-hour refresh keeps the load to a few requests a day per user.
+- The extension fetches `https://ibjarates.com/`. There is no official API, so the HTML is scraped. The site has no robots.txt; the refresh schedule (see architecture.md) keeps the load to about 10 requests on a weekday per user.
 - Rates are in ₹ per 10 g for gold, e.g. `157821`, and may contain commas or decimals. `toRate()` strips everything except digits and dots, then rounds.
 - metals.dev, metalpriceapi.com and similar APIs only offer the international spot price, or IBJA in USD per ounce. They are not a substitute.
 

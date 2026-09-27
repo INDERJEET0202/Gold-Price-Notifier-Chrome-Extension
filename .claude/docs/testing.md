@@ -1,6 +1,6 @@
 # Testing
 
-`npm test` runs the Playwright end-to-end suite in `tests/` (34 tests, about 20 seconds). Each test loads the real unpacked extension into Chromium and drives its service worker and popup.
+`npm test` runs the Playwright end-to-end suite in `tests/` (about 20 seconds). Each test loads the real unpacked extension into Chromium and drives its service worker and popup.
 
 ## Setup
 
@@ -21,7 +21,9 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/parsing.spec.js` | PM/AM selection, the weekend/holiday history fallback, date formats, error messages, keeping the last good rates |
 | `tests/alerts.spec.js` | When notifications are and aren't sent, and their text |
 | `tests/popup.spec.js` | Every popup state, saving targets, the purity switch, layout width and both themes |
-| `tests/lifecycle.spec.js` | Install alarm and fetch, the 3-hour staleness rule, surviving a browser restart |
+| `tests/lifecycle.spec.js` | Install alarm and fetch, surviving a browser restart |
+| `tests/refresh-schedule.spec.js` | How often `refreshIfStale(now)` fetches inside and outside IBJA's publishing windows and at weekends |
+| `tests/welcome.spec.js` | The welcome page opening on install and fitting the window |
 
 ## How the fixtures work
 
@@ -29,7 +31,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 - **Clean start:** the `extension` fixture waits for the extension's own install-time fetch to fail, then clears storage. Use the plain `context` fixture with `Extension.attach()` to test install behaviour itself.
 - **Waiting for the worker:** `Extension.attach()` waits until `chrome.*` and `background.js` are ready, because Playwright can reach the worker before Chrome has run it (this made tests flaky before).
 - **`extension.serveIbja(html, status)`** replaces `fetch` inside the service worker for ibjarates.com URLs. Other URLs pass through, because `chrome.notifications` loads its icon with `fetch`.
-- **Driving the worker:** `extension.refresh()` and `refreshIfStale()` call the worker's own top-level functions. `storage()`, `setStorage()` (replaces everything) and `updateStorage()` (merges, like the popup does) read and write `chrome.storage.local`.
+- **Driving the worker:** `extension.refresh()` and `extension.refreshIfStale(now)` call the worker's own top-level functions; pass `now` (e.g. `'2026-09-28T06:45:00Z'`) to test the schedule at a fixed time. `storage()`, `setStorage()` (replaces everything) and `updateStorage()` (merges, like the popup does) read and write `chrome.storage.local`.
 - **Notifications:** `chrome.notifications.create` is wrapped to record messages. `notifications()` returns them and `clearNotifications()` resets the list. Alerts triggered through storage changes are asynchronous, so check them with `expect.poll(...)`, and call `extension.settle()` before asserting that nothing was sent.
 - **Popup:** `extension.openPopup({ colorScheme })` opens `popup.html` at 376px wide. Uncaught popup errors fail the test automatically.
 

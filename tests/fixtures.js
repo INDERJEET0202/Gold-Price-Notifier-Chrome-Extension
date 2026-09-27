@@ -70,8 +70,9 @@ class Extension {
         await this.serviceWorker.evaluate(() => refreshGoldRate());
     }
 
-    async refreshIfStale() {
-        await this.serviceWorker.evaluate(() => refreshIfStale());
+    // Runs the extension's staleness check as if the clock read `now` (an ISO string or ms).
+    async refreshIfStale(now = Date.now()) {
+        await this.serviceWorker.evaluate((now) => refreshIfStale(now), new Date(now).getTime());
     }
 
     storage() {

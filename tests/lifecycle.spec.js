@@ -1,8 +1,6 @@
 const { test, expect, launchBrowser, Extension } = require('./fixtures');
 const { ibjaPage } = require('./ibja-pages');
 
-const HOUR = 60 * 60 * 1000;
-
 test.describe('extension lifecycle', () => {
     test('sets up the hourly refresh alarm and fetches on install', async ({ context }) => {
         const extension = await Extension.attach(context);
@@ -12,15 +10,10 @@ test.describe('extension lifecycle', () => {
         expect(await extension.alarms()).toEqual([expect.objectContaining({ name: 'refresh-gold-rate', periodInMinutes: 60 })]);
     });
 
-    test('only refetches once the stored rate is over 3 hours old', async ({ extension }) => {
+    test('always fetches when there is no rate yet', async ({ extension }) => {
         await extension.serveIbja(ibjaPage({ pm: { 999: '157739', 916: '144489' } }));
+        await extension.refreshIfStale('2026-09-27T06:00:00Z'); // Sunday
 
-        await extension.setStorage({ lastFetched: Date.now() - 2 * HOUR });
-        await extension.refreshIfStale();
-        expect(await extension.ibjaRequests()).toEqual([]);
-
-        await extension.setStorage({ lastFetched: Date.now() - 3.1 * HOUR });
-        await extension.refreshIfStale();
         expect(await extension.ibjaRequests()).toHaveLength(1);
     });
 
