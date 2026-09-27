@@ -23,6 +23,8 @@ const REFRESH_ON_WEEKENDS_MS = 12 * HOUR_MS; // IBJA doesn't publish on Saturday
 const PURITY_CODES = { '24K': '999', '22K': '916' };
 // Column of each fineness in IBJA's history tables: date, 999, 995, 916, 750, 585, silver.
 const HISTORY_COLUMNS = { '999': 1, '995': 2, '916': 3, '750': 4, '585': 5 };
+// Working days of rates kept in rateHistory for the popup's trend and chart.
+const HISTORY_DAYS = 10;
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 // Show a short getting-started guide on first install. Updates open nothing.
@@ -76,7 +78,7 @@ async function ensureRefreshAlarm() {
 async function refreshIfStale(now = Date.now()) {
     const { lastFetched = 0 } = await chrome.storage.local.get('lastFetched');
     if (now - lastFetched >= refreshIntervalMs(now)) {
-        await refreshGoldRate();
+        await refreshGoldRate(now);
     }
 }
 
@@ -94,15 +96,26 @@ function refreshIntervalMs(now) {
 }
 
 // Fetch today's 24K and 22K gold rates from ibjarates.com
-async function refreshGoldRate() {
+async function refreshGoldRate(now = Date.now()) {
     try {
         const response = await fetch(IBJA_URL);
         if (!response.ok) {
             throw new Error(`ibjarates.com returned HTTP ${response.status}`);
         }
-        const { goldRates, rateSession, rateDate = null } = parseIbjaRates(await response.text());
+        const html = await response.text();
+        const { goldRates, rateSession, rateDate = null } = parseIbjaRates(html);
         console.log(`Gold rates updated (IBJA ${rateSession}):`, goldRates);
-        await chrome.storage.local.set({ goldRates, rateSession, rateDate, lastFetched: Date.now(), lastError: null });
+        // Today's rate goes in at today's date in India, after the page's history, so it wins.
+        const { rateHistory = [] } = await chrome.storage.local.get('rateHistory');
+        const days = [...parseHistoryDays(html), { date: rateDate ?? istDate(now), goldRates }];
+        await chrome.storage.local.set({
+            goldRates,
+            rateSession,
+            rateDate,
+            rateHistory: mergeRateHistory(rateHistory, days),
+            lastFetched: now,
+            lastError: null,
+        });
         await checkPriceDrop();
     } catch (error) {
         console.error('Failed to fetch the gold rate:', error);
@@ -141,10 +154,16 @@ function parseTodayRates(html) {
     return null;
 }
 
-// Earlier rates are in tables inside #tab-am and #tab-pm, one row per day. Weekend and
-// holiday rows have no rates. PM is read first so it wins over AM for the same day.
 function parseLatestHistoryRates(html) {
-    let latest = null;
+    const latest = parseHistoryDays(html).at(-1);
+    return latest && { goldRates: latest.goldRates, rateSession: latest.rateSession, rateDate: latest.date };
+}
+
+// Earlier rates are in tables inside #tab-am and #tab-pm, one row per day. Returns every day
+// with both rates as { date: 'YYYY-MM-DD', goldRates, rateSession }, oldest first. Weekend and
+// holiday rows have no rates. PM is read first so it wins over AM for the same day.
+function parseHistoryDays(html) {
+    const days = new Map();
     for (const rateSession of ['PM', 'AM']) {
         for (const cells of historyRows(html, rateSession)) {
             const date = parseIbjaDate(cells[0]);
@@ -152,12 +171,23 @@ function parseLatestHistoryRates(html) {
             for (const [purity, code] of Object.entries(PURITY_CODES)) {
                 goldRates[purity] = toRate(cells[HISTORY_COLUMNS[code]]);
             }
-            if (date && Object.values(goldRates).every((rate) => rate > 0) && (!latest || date > latest.date)) {
-                latest = { date, goldRates, rateSession };
+            if (date && Object.values(goldRates).every((rate) => rate > 0) && !days.has(toIsoDate(date))) {
+                days.set(toIsoDate(date), { date: toIsoDate(date), goldRates, rateSession });
             }
         }
     }
-    return latest && { goldRates: latest.goldRates, rateSession: latest.rateSession, rateDate: toIsoDate(latest.date) };
+    return [...days.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Adds `days` to the stored history, replacing stored days with the same date, and keeps the
+// latest HISTORY_DAYS. Keeping our own copy means the chart still fills up over time if
+// ibjarates.com shows only a few days.
+function mergeRateHistory(rateHistory, days) {
+    const byDate = new Map(rateHistory.map((day) => [day.date, day]));
+    for (const { date, goldRates } of days) {
+        byDate.set(date, { date, goldRates });
+    }
+    return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(-HISTORY_DAYS);
 }
 
 // Returns the text of each cell for every row in the #tab-am or #tab-pm section.
@@ -181,6 +211,11 @@ function parseIbjaDate(text) {
     const monthIndex = /^\d+$/.test(month) ? Number(month) - 1 : MONTHS.indexOf(String(month).slice(0, 3).toLowerCase());
     const date = new Date(Number(year), monthIndex, Number(day));
     return monthIndex >= 0 && date.getDate() === Number(day) ? date : null;
+}
+
+// Today's date in India as YYYY-MM-DD, whatever the computer's time zone.
+function istDate(now) {
+    return new Date(now + IST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
 // The popup formats the day itself, so store it as YYYY-MM-DD.

@@ -119,17 +119,24 @@ test.describe('popup', () => {
                 goldRates: RATES,
                 rateSession: 'PM',
                 lastFetched: Date.now(),
-                lastError: 'ibjarates.com returned HTTP 403',
+                lastError: 'the 24K and 22K rates are missing from ibjarates.com (the page may have changed)',
                 targetRates: { '24K': 158000 },
+                rateHistory: [
+                    { date: '2026-09-24', goldRates: { '24K': 158159, '22K': 144400 } },
+                    { date: '2026-09-25', goldRates: RATES },
+                ],
             });
             const popup = await extension.openPopup({ colorScheme });
             await expect(popup.locator('#rate-value')).toHaveText('₹1,57,739');
+            await expect(popup.locator('#rate-chart')).toBeVisible();
 
             const layout = await popup.evaluate(() => ({
                 overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
                 frame: getComputedStyle(document.body).backgroundColor,
+                // Chrome caps popups at 600px high and scrolls anything taller.
+                fitsHeight: document.body.getBoundingClientRect().height <= 600,
             }));
-            expect(layout).toEqual({ overflow: 0, frame: frameColor });
+            expect(layout).toEqual({ overflow: 0, frame: frameColor, fitsHeight: true });
         });
     }
 });

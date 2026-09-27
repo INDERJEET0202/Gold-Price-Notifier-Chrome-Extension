@@ -34,7 +34,11 @@
                     <span id="rate-session" class="pill" hidden></span>
                 </div>
                 <div id="rate-loading" class="skeleton" role="status" aria-label="Loading the gold rate"></div>
-                <p id="rate-value" class="rate-value" hidden></p>
+                <div class="rate-row">
+                    <p id="rate-value" class="rate-value" hidden></p>
+                    <svg id="rate-chart" class="rate-chart" viewBox="0 0 120 40" role="img" hidden></svg>
+                </div>
+                <p id="rate-trend" class="rate-trend" hidden></p>
                 <p id="rate-meta" class="rate-meta"></p>
                 <p id="target-diff" class="target-diff" hidden></p>
             </section>

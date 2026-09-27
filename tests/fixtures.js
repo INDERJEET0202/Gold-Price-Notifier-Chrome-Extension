@@ -84,9 +84,10 @@ class Extension {
         return this.serviceWorker.evaluate(() => self.ibjaRequests ?? []);
     }
 
-    // Runs the extension's own refresh, as the hourly alarm would.
-    async refresh() {
-        await this.serviceWorker.evaluate(() => refreshGoldRate());
+    // Runs the extension's own refresh, as the hourly alarm would, optionally as if the clock
+    // read `now` (an ISO string or ms).
+    async refresh(now = Date.now()) {
+        await this.serviceWorker.evaluate((now) => refreshGoldRate(now), new Date(now).getTime());
     }
 
     // Runs the extension's staleness check as if the clock read `now` (an ISO string or ms).
