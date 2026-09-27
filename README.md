@@ -28,7 +28,7 @@ npm test
 ## Backend ?
 
 - Takes the 24K (999) and 22K (916) gold rates from [IBJA](https://ibjarates.com) (India Bullion and Jewellers Association), India's benchmark rate. It's in ₹ per 10g and includes import duty but not GST or making charges.
-- IBJA publishes an AM rate around noon and a PM rate around 5-6 PM IST on working days. The extension checks every 3 hours using a `chrome.alarms` alarm (MV3 service workers are shut down when idle, so timers like `setInterval` don't survive) and shows the latest one.
+- IBJA publishes an AM rate around noon and a PM rate around 5-6 PM IST on working days. The extension checks every hour around those times on weekdays (11:30 AM–2 PM and 4:30–7:30 PM IST), every 6 hours at other times and every 12 hours at weekends, using a `chrome.alarms` alarm (MV3 service workers are shut down when idle, so timers like `setInterval` don't survive). It shows the latest rate.
 - IBJA doesn't publish on weekends and central government holidays. On those days the extension shows the latest earlier rate from the page's AM/PM history tables, with its date.
 - IBJA has no public API, so the rate is read from the ibjarates.com page. If the site changes its layout, the popup shows an error until the parser is updated.
 - Users pick a purity and input a gold rate for it; these are saved in `chrome.storage.local` along with the latest rates.
