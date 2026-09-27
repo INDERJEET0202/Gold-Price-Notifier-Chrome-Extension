@@ -26,6 +26,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/welcome.spec.js` | The welcome page opening on install and fitting the window |
 | `tests/trend.spec.js` | `rateHistory` (merging, PM over AM, dates in India, the 10-day limit) and the popup's trend line and sparkline |
 | `tests/gst.spec.js` | The GST switch in the popup, per-gram prices, entering an alert price with GST, and GST in alerts and the badge |
+| `tests/refresh-button.spec.js` | The popup's refresh button: fetches at once whatever the schedule says, spins while the fetch runs, shows errors, and alerts on a new low |
 | `tests/badge.spec.js` | The toolbar badge's text, colour and tooltip, following the purity and alert price, and after a restart |
 | `tests/package.spec.js` | The Web Store zip: `PACKAGE_FILES` matches every file the manifest, pages and `background.js` refer to; the manifest meets the store limits; the zip unpacks to identical files that Chrome loads and runs; the store images have the required sizes |
 | `tests/goodbye.spec.js` | Removing the extension opens `GOODBYE_URL` (read from the tab's history over CDP, since DNS is blocked); `docs/goodbye.html` in both themes and at phone width; each reason links to a pre-filled GitHub issue |

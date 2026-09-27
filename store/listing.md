@@ -26,7 +26,7 @@ FEATURES
 • An alert price for each purity, with one desktop notification when the rate drops below it
 • The change since the previous working day, and a chart of the last 7 working days
 • Optional 3% GST, to see what you would actually pay
-• Checks for new rates every hour around IBJA's publishing times (around noon and 5–6 PM IST) on working days
+• Checks for new rates every hour around IBJA's publishing times (around noon and 5–6 PM IST) on working days, or right away with the refresh button
 • On weekends and holidays, the last published rate with its date
 • Light and dark mode
 

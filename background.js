@@ -8,6 +8,7 @@ importScripts('format.js');
 const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
 const PRICE_DROP_NOTIFICATION = 'price-drop';
+const REFRESH_NOW_MESSAGE = 'refresh-now'; // Sent by the popup's refresh button.
 // Chrome opens this page after the extension is removed. It has to be on the web, since the
 // extension's own files are gone by then: it is docs/goodbye.html, served by GitHub Pages.
 const GOODBYE_URL = 'https://inderjeet0202.github.io/Gold-Price-Notifier-Chrome-Extension/goodbye.html';
@@ -68,6 +69,16 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 });
 
 chrome.notifications.onClicked.addListener(openIbjaFromNotification);
+
+// The popup's refresh button. Returning true keeps the channel open, so the popup's button spins
+// until the fetch is done. refreshGoldRate() never throws: failures end up in lastError.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === REFRESH_NOW_MESSAGE) {
+        refreshGoldRate().then(() => sendResponse({ done: true }));
+        return true;
+    }
+    return false;
+});
 
 // Alarms usually survive browser restarts, but Chrome doesn't guarantee it.
 async function ensureRefreshAlarm() {

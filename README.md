@@ -50,6 +50,7 @@ For an update, bump `version` in `manifest.json`, run `npm run package` again, a
 - IBJA rates exclude GST. The popup's **Include 3% GST** switch shows every price with GST instead, in the popup, on the toolbar icon and in alerts. The popup also shows the price per gram. Alert prices are stored without GST, so switching never changes when an alert fires.
 - The popup shows how the rate changed since the previous working day ("▼ ₹420 (0.27%) since Thu") and a sparkline of the last 7 working days, with the alert price as a dashed line. The extension keeps the last 10 working days' rates, taken from the page's history tables and from its own fetches.
 - Installing opens a short welcome page. Removing the extension opens an "Are you going?" page (`docs/goodbye.html` on GitHub Pages) that asks why, with one-click feedback and a Reinstall button.
+- The popup's refresh button checks ibjarates.com for a new rate straight away.
 - The toolbar icon shows the selected purity's rate in thousands ("158K" for ₹1,57,739, since Chrome's badge only fits about four characters) and turns green while it's below the user's rate. Hovering the icon shows the full rate.
 
 

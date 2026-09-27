@@ -17,7 +17,7 @@ This data never leaves your browser. It is not synced to your Google account, an
 
 ## What it sends
 
-To read the rate, the extension loads `https://ibjarates.com/`, the website of the India Bullion and Jewellers Association: about ten times on a working day and twice on a weekend day, only while Chrome is running. Like any web page visit, this request reaches ibjarates.com from your IP address with your browser's standard headers. The extension adds nothing to it: no identifiers, and none of your settings or alert prices.
+To read the rate, the extension loads `https://ibjarates.com/`, the website of the India Bullion and Jewellers Association: about ten times on a working day and twice on a weekend day, only while Chrome is running, plus whenever you click the refresh button in the popup. Like any web page visit, this request reaches ibjarates.com from your IP address with your browser's standard headers. The extension adds nothing to it: no identifiers, and none of your settings or alert prices.
 
 Clicking a price alert or the ibjarates.com link opens that website in a tab, as a normal visit.
 
