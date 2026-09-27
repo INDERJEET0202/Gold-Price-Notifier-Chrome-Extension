@@ -63,5 +63,6 @@ Amounts follow `includeGst`, so the badge reads `162K` for ₹1,57,739 with GST.
 
 ## Other behaviour
 
-- On install the built-in `welcome.html` guide opens. Updates open nothing, and there is no uninstall page (updates clear the one that versions before 1.3 set).
+- On install the built-in `welcome.html` guide opens. Updates open nothing.
+- Every install and update sets `chrome.runtime.setUninstallURL(GOODBYE_URL)`, so Chrome opens the "Are you going?" page after the extension is removed. The extension's files are gone by then, so the page is on the web: `docs/goodbye.html`, served by GitHub Pages at `https://inderjeet0202.github.io/Gold-Price-Notifier-Chrome-Extension/goodbye.html`. GitHub Pages must be on for the repo (Settings → Pages → Deploy from a branch → `master`, `/docs`), otherwise the address shows a 404. The page is static, with no script or tracking. Its reason buttons open pre-filled GitHub issues, and its Reinstall button links to the Chrome Web Store.
 - `PURITY_CODES` maps the popup's purities to IBJA fineness codes: `24K → 999`, `22K → 916`. Adding a purity means adding it there, adding its column to `HISTORY_COLUMNS` if needed, and adding a button to the popup's segmented switch.

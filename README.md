@@ -32,6 +32,7 @@ To change the icon, edit `Icons/logo.svg` and run `npm run icons` to render the 
 1. Register as a developer in the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole). It costs a one-time US$5 fee (no yearly fee), and the Google account needs 2-Step Verification.
 2. Run `npm run package`. It writes `dist/gold-price-drop-notifier-<version>.zip` with only the files the extension needs.
 3. In the dashboard, click **New item** and upload the zip.
+   Before publishing, switch on GitHub Pages for this repo (**Settings → Pages → Deploy from a branch → `master`, `/docs`**), so the "Are you going?" page that opens after someone removes the extension is online.
 4. Fill in the **Store listing**, **Privacy practices** and **Distribution** tabs from [`store/listing.md`](store/listing.md), and upload the images in [`store/`](store). The privacy policy is [`PRIVACY.md`](PRIVACY.md).
 5. Submit for review. Reviews usually take a few days.
 
@@ -48,6 +49,7 @@ For an update, bump `version` in `manifest.json`, run `npm run package` again, a
 - When the rate for the selected purity drops below the user given rate, the extension sends a notification that Gold Price Dropped. It alerts once per dip: not again while the price stays below, but again after it recovers and drops once more, or when the user sets a new alert price. Clicking the notification opens ibjarates.com.
 - IBJA rates exclude GST. The popup's **Include 3% GST** switch shows every price with GST instead, in the popup, on the toolbar icon and in alerts. The popup also shows the price per gram. Alert prices are stored without GST, so switching never changes when an alert fires.
 - The popup shows how the rate changed since the previous working day ("▼ ₹420 (0.27%) since Thu") and a sparkline of the last 7 working days, with the alert price as a dashed line. The extension keeps the last 10 working days' rates, taken from the page's history tables and from its own fetches.
+- Installing opens a short welcome page. Removing the extension opens an "Are you going?" page (`docs/goodbye.html` on GitHub Pages) that asks why, with one-click feedback and a Reinstall button.
 - The toolbar icon shows the selected purity's rate in thousands ("158K" for ₹1,57,739, since Chrome's badge only fits about four characters) and turns green while it's below the user's rate. Hovering the icon shows the full rate.
 
 

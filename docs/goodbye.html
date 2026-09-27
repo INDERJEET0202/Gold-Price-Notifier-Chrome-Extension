@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Are you going? · Gold Price Drop Notifier</title>
+    <meta name="description" content="Gold Price Drop Notifier has been removed from Chrome.">
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="logo.png">
+    <!-- Chrome opens this page after the extension is removed (chrome.runtime.setUninstallURL in
+         background.js). It is served by GitHub Pages from the docs/ folder, so it must stand alone:
+         no scripts, no tracking, and only this file and logo.png. The colours match theme.css. -->
+    <style>
+        :root {
+            color-scheme: light dark;
+            --frame: #ece5d8;
+            --bg: #ffffff;
+            --surface: #faf7f2;
+            --surface-strong: #f2ece1;
+            --border: #e7e0d4;
+            --text: #1c1917;
+            --muted: #736b64;
+            --accent: #a16207;
+            --accent-strong: #854d0e;
+            --accent-soft: #fbf0d9;
+            --on-accent: #ffffff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --frame: #0b0a09;
+                --bg: #161412;
+                --surface: #201d1a;
+                --surface-strong: #2b2723;
+                --border: #3a342e;
+                --text: #f5f2ed;
+                --muted: #a8a29e;
+                --accent: #e5b54a;
+                --accent-strong: #f0c965;
+                --accent-soft: #3b3018;
+                --on-accent: #1c1917;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            background: var(--frame);
+        }
+
+        body {
+            padding: 56px 16px;
+            color: var(--text);
+            font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        main {
+            max-width: 620px;
+            margin: 0 auto;
+            padding: 44px 40px 36px;
+            border-radius: 28px;
+            background: var(--bg);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 16px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .hero {
+            text-align: center;
+        }
+
+        .hero img {
+            width: 88px;
+            height: 88px;
+            animation: bob 2.6s ease-in-out infinite;
+        }
+
+        @keyframes bob {
+            50% {
+                transform: translateY(-6px) rotate(-4deg);
+            }
+        }
+
+        h1 {
+            margin: 18px 0 10px;
+            font-size: 34px;
+            font-weight: 750;
+            letter-spacing: -0.025em;
+            line-height: 1.15;
+        }
+
+        .lead {
+            max-width: 460px;
+            text-wrap: balance;
+            margin: 0 auto;
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        section {
+            margin-top: 36px;
+        }
+
+        h2 {
+            margin: 0 0 4px;
+            font-size: 17px;
+            font-weight: 650;
+        }
+
+        .section-note {
+            margin: 0 0 16px;
+            color: var(--muted);
+            font-size: 13.5px;
+        }
+
+        .chips {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .chip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--text);
+            font-weight: 550;
+            text-align: center;
+            text-decoration: none;
+            transition: border-color 0.15s, background 0.15s, transform 0.15s;
+        }
+
+        .chip:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            transform: translateY(-1px);
+        }
+
+        .chip:focus-visible,
+        .button:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .comeback {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 22px 24px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: var(--surface);
+        }
+
+        .comeback div {
+            flex: 1;
+        }
+
+        .comeback p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13.5px;
+        }
+
+        .button {
+            flex-shrink: 0;
+            padding: 12px 22px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: var(--on-accent);
+            font-weight: 650;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.15s;
+        }
+
+        .button:hover {
+            background: var(--accent-strong);
+        }
+
+        .tips {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .tips li {
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .tips strong {
+            color: var(--text);
+        }
+
+        footer {
+            margin-top: 32px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 560px) {
+            main {
+                padding: 32px 22px 28px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .chips {
+                grid-template-columns: 1fr;
+            }
+
+            .comeback {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .button {
+                text-align: center;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero img {
+                animation: none;
+            }
+
+            .chip {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="hero">
+            <img src="logo.png" alt="">
+            <h1>Are you going?</h1>
+            <p class="lead">
+                Gold Price Drop Notifier has been removed from Chrome, and your alert prices and settings went
+                with it. Thanks for giving it a try.
+            </p>
+        </div>
+
+        <section aria-labelledby="why">
+            <h2 id="why">What made you leave?</h2>
+            <p class="section-note">One click opens a short, pre-filled note on GitHub. It really helps.</p>
+            <div class="chips">
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20The%20rate%20looked%20wrong&amp;body=Why%20I%20removed%20the%20extension%3A%20The%20rate%20looked%20wrong%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">The rate looked wrong</a>
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20Too%20many%20notifications&amp;body=Why%20I%20removed%20the%20extension%3A%20Too%20many%20notifications%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">Too many notifications</a>
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20I%20didn%27t%20get%20any%20alerts&amp;body=Why%20I%20removed%20the%20extension%3A%20I%20didn%27t%20get%20any%20alerts%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">I didn&#39;t get any alerts</a>
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20Something%20didn%27t%20work&amp;body=Why%20I%20removed%20the%20extension%3A%20Something%20didn%27t%20work%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">Something didn&#39;t work</a>
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20I%20don%27t%20need%20it%20right%20now&amp;body=Why%20I%20removed%20the%20extension%3A%20I%20don%27t%20need%20it%20right%20now%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">I don&#39;t need it right now</a>
+                <a class="chip" href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension/issues/new?title=Uninstall%20feedback%3A%20Something%20else&amp;body=Why%20I%20removed%20the%20extension%3A%20Something%20else%0A%0AAnything%20else%20you%20would%20like%20to%20tell%20us%3F%20%28optional%29%0A%0A" target="_blank" rel="noopener">Something else</a>
+            </div>
+        </section>
+
+        <section aria-labelledby="tips">
+            <h2 id="tips">Before you go</h2>
+            <ul class="tips">
+                <li>
+                    <strong>Price higher at the shop?</strong>
+                    IBJA's benchmark rate doesn't include GST or making charges. Switch on <em>Include 3% GST</em>
+                    at the bottom of the popup to see the price with GST.
+                </li>
+                <li>
+                    <strong>No alerts?</strong>
+                    Your computer has to allow Chrome to show notifications, and you get one alert each time the
+                    rate drops below your price.
+                </li>
+            </ul>
+        </section>
+
+        <section class="comeback" aria-labelledby="mistake">
+            <div>
+                <h2 id="mistake">Removed it by mistake?</h2>
+                <p>Add it back in a few seconds. You'll need to set your alert price again.</p>
+            </div>
+            <a class="button" href="https://chromewebstore.google.com/search/Gold%20Price%20Drop%20Notifier" target="_blank" rel="noopener">Reinstall</a>
+        </section>
+
+        <footer>
+            Not affiliated with IBJA · <a href="https://github.com/INDERJEET0202/Gold-Price-Notifier-Chrome-Extension" target="_blank" rel="noopener">Source on GitHub</a>
+        </footer>
+    </main>
+</body>
+
+</html>

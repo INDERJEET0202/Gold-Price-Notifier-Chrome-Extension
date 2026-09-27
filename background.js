@@ -8,6 +8,9 @@ importScripts('format.js');
 const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
 const PRICE_DROP_NOTIFICATION = 'price-drop';
+// Chrome opens this page after the extension is removed. It has to be on the web, since the
+// extension's own files are gone by then: it is docs/goodbye.html, served by GitHub Pages.
+const GOODBYE_URL = 'https://inderjeet0202.github.io/Gold-Price-Notifier-Chrome-Extension/goodbye.html';
 const BADGE_COLOR = '#a16207'; // The popup's gold accent.
 const BADGE_COLOR_BELOW_TARGET = '#15803d'; // Green, like "below your alert price" in the popup.
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
@@ -31,10 +34,9 @@ const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', '
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === 'install') {
         chrome.tabs.create({ url: 'welcome.html' });
-    } else if (details.reason === 'update') {
-        // Versions before 1.3 opened a stock "goodbye" image after uninstalling; stop that.
-        chrome.runtime.setUninstallURL('');
     }
+    // Set on updates too, replacing the stock "goodbye" image that versions before 1.3 opened.
+    chrome.runtime.setUninstallURL(GOODBYE_URL);
     ensureRefreshAlarm();
     updateBadge();
     refreshIfStale();
