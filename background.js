@@ -8,6 +8,8 @@ importScripts('format.js');
 const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
 const PRICE_DROP_NOTIFICATION = 'price-drop';
+const BADGE_COLOR = '#a16207'; // The popup's gold accent.
+const BADGE_COLOR_BELOW_TARGET = '#15803d'; // Green, like "below your alert price" in the popup.
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
 const HOUR_MS = 60 * 60 * 1000;
 const IST_OFFSET_MS = 5.5 * HOUR_MS; // India has no daylight saving.
@@ -32,11 +34,13 @@ chrome.runtime.onInstalled.addListener((details) => {
         chrome.runtime.setUninstallURL('');
     }
     ensureRefreshAlarm();
+    updateBadge();
     refreshIfStale();
 });
 
 chrome.runtime.onStartup.addListener(() => {
     ensureRefreshAlarm();
+    updateBadge(); // Chrome resets the badge when the browser restarts.
     refreshIfStale();
 });
 
@@ -48,8 +52,14 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 // The popup only writes the user's purity and rates to storage; check them as soon as they change.
 chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && (changes.targetRates || changes.purity)) {
+    if (areaName !== 'local') {
+        return;
+    }
+    if (changes.targetRates || changes.purity) {
         checkPriceDrop();
+    }
+    if (changes.goldRates || changes.targetRates || changes.purity) {
+        updateBadge();
     }
 });
 
@@ -232,4 +242,29 @@ function openIbjaFromNotification(notificationId) {
         chrome.tabs.create({ url: IBJA_URL });
         chrome.notifications.clear(notificationId);
     }
+}
+
+// Shows the selected purity's rate on the toolbar icon in thousands, e.g. "158K" for ₹1,57,739
+// (Chrome only has room for about four characters), green while it's below the alert price.
+// Hovering the icon shows the full rate.
+async function updateBadge() {
+    const { goldRates = {}, targetRates = {}, purity = '24K', rateSession } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'rateSession']);
+    const goldRate = goldRates[purity];
+    const targetRate = targetRates[purity];
+    const belowTarget = Boolean(goldRate && targetRate && goldRate < targetRate);
+
+    let title = 'Gold Price Drop Notifier';
+    if (goldRate) {
+        title = `${purity} gold: ${formatRupees(goldRate)}/10g (IBJA ${rateSession} rate)`;
+        if (targetRate) {
+            title += belowTarget
+                ? `\n${formatRupees(targetRate - goldRate)} below your alert price`
+                : `\nAlert when it drops below ${formatRupees(targetRate)}`;
+        }
+    }
+    await chrome.action.setBadgeText({ text: goldRate ? `${Math.round(goldRate / 1000)}K` : '' });
+    await chrome.action.setBadgeBackgroundColor({ color: belowTarget ? BADGE_COLOR_BELOW_TARGET : BADGE_COLOR });
+    await chrome.action.setBadgeTextColor({ color: '#ffffff' });
+    await chrome.action.setTitle({ title });
 }
