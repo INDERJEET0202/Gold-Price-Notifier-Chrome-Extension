@@ -14,6 +14,8 @@ A Chrome extension (Manifest V3, plain JavaScript) that shows India's IBJA bench
 | `manifest.json` | MV3 manifest. Permissions: `alarms`, `notifications`, `storage`. Host permissions: `ibjarates.com` (with and without `www`). |
 | `background.js` | Service worker. Schedules refreshes, fetches and parses ibjarates.com, stores rates, sends notifications. |
 | `popup.html`, `popup.css`, `popup.js` | Toolbar popup. Renders what is in storage and saves the user's purity and target rates. |
+| `welcome.html`, `welcome.css` | Getting-started page opened once on install. Static, no script. |
+| `theme.css` | Colour variables (light and dark) and base styles shared by the popup and the welcome page. |
 | `format.js` | `formatRupees()`, shared by the service worker (`importScripts`) and the popup (`<script>`). |
 | `Icons/logo.png` | Notification icon. The `logo*.png` files in the root are the extension icons. |
 | `README.md` | User-facing overview. Its code snippets are copies of functions in `background.js`; update them when those functions change. |

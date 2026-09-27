@@ -122,12 +122,16 @@ class Extension {
         await this.serviceWorker.evaluate(() => new Promise((resolve) => setTimeout(resolve, 300)));
     }
 
-    async openPopup({ colorScheme = 'light' } = {}) {
+    openPopup({ colorScheme = 'light' } = {}) {
+        return this.openPage('popup.html', { colorScheme, width: 376 });
+    }
+
+    async openPage(path, { colorScheme = 'light', width = 1280 } = {}) {
         const page = await this.context.newPage();
         page.on('pageerror', (error) => this.pageErrors.push(error.message));
         await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
-        await page.setViewportSize({ width: 376, height: 600 });
-        await page.goto(`chrome-extension://${this.id}/popup.html`);
+        await page.setViewportSize({ width, height: 600 });
+        await page.goto(`chrome-extension://${this.id}/${path}`);
         return page;
     }
 }

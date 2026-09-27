@@ -20,7 +20,7 @@
 
 ## Theming
 
-- Colours are CSS custom properties on `:root` (`--frame`, `--bg`, `--surface`, `--surface-strong`, `--border`, `--text`, `--muted`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`, `--good`, `--warn`, `--warn-soft`, `--shadow`).
+- Colours are CSS custom properties on `:root` in `theme.css`, which the popup and `welcome.html` both load first (`--frame`, `--bg`, `--surface`, `--surface-strong`, `--border`, `--text`, `--muted`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`, `--good`, `--warn`, `--warn-soft`, `--shadow`).
 - A `@media (prefers-color-scheme: dark)` block redefines them, so the popup follows the OS or Chrome theme with no JavaScript. `color-scheme: light dark` makes native controls match.
 - When adding UI, use the variables rather than literal colours, and check both themes.
 - Animations respect `prefers-reduced-motion`.
