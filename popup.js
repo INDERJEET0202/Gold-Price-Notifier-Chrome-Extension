@@ -15,17 +15,18 @@ async function runFunction() {
     document.getElementById('rate-form').addEventListener('submit', saveUserRate);
     document.querySelectorAll('input[name="purity"]').forEach((radio) => radio.addEventListener('change', savePurity));
 
-    const state = await chrome.storage.local.get(STORAGE_KEYS);
-    const purity = state.purity || selectedPurity();
-    document.getElementById(`purity-${purity}`).checked = true;
-    fillUserInput(purity, state.targetRates);
-    render(state);
-
+    // Listen before the first read, so a fetch that finishes while the popup opens isn't missed.
     chrome.storage.onChanged.addListener(async (changes, areaName) => {
         if (areaName === 'local') {
             render(await chrome.storage.local.get(STORAGE_KEYS));
         }
     });
+
+    const state = await chrome.storage.local.get(STORAGE_KEYS);
+    const purity = state.purity || selectedPurity();
+    document.getElementById(`purity-${purity}`).checked = true;
+    fillUserInput(purity, state.targetRates);
+    render(state);
 }
 
 function render({ goldRates = {}, rateSession, rateDate, rateHistory = [], lastFetched, lastError, targetRates = {} }) {
