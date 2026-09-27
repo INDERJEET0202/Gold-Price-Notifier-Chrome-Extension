@@ -18,6 +18,27 @@ function launchBrowser(userDataDir) {
     });
 }
 
+const isExtensionWorker = (worker) => worker.url().endsWith('/background.js');
+
+// Under load, Playwright sometimes misses a service worker that starts while the browser is
+// launching and never reports it, although it is running. Restarting the worker from
+// chrome://serviceworker-internals makes Playwright attach to it.
+async function findServiceWorker(context) {
+    const reported = () => context.waitForEvent('serviceworker', { predicate: isExtensionWorker, timeout: 10_000 });
+    const worker = context.serviceWorkers().find(isExtensionWorker) ?? await reported().catch(() => null);
+    if (worker) {
+        return worker;
+    }
+    const internals = await context.newPage();
+    await internals.goto('chrome://serviceworker-internals/');
+    await internals.getByRole('button', { name: 'Stop', exact: true }).click();
+    const restarted = reported();
+    await internals.getByRole('button', { name: 'Start', exact: true }).click();
+    const restartedWorker = await restarted;
+    await internals.close();
+    return restartedWorker;
+}
+
 class Extension {
     constructor(context, serviceWorker) {
         this.context = context;
@@ -27,9 +48,7 @@ class Extension {
     }
 
     static async attach(context) {
-        const isExtensionWorker = (worker) => worker.url().endsWith('/background.js');
-        const serviceWorker = context.serviceWorkers().find(isExtensionWorker)
-            ?? await context.waitForEvent('serviceworker', isExtensionWorker);
+        const serviceWorker = await findServiceWorker(context);
         // Playwright can reach the worker before Chrome has set up the chrome.* APIs and run
         // background.js, so wait until both are there.
         await expect.poll(() => serviceWorker.evaluate(() => Boolean(self.chrome?.notifications) && typeof checkPriceDrop === 'function')).toBe(true);
