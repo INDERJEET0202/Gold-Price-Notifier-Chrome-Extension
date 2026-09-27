@@ -32,7 +32,7 @@ npm test
 - IBJA doesn't publish on weekends and central government holidays. On those days the extension shows the latest earlier rate from the page's AM/PM history tables, with its date.
 - IBJA has no public API, so the rate is read from the ibjarates.com page. If the site changes its layout, the popup shows an error until the parser is updated.
 - Users pick a purity and input a gold rate for it; these are saved in `chrome.storage.local` along with the latest rates.
-- Whenever IBJA publishes a rate for the selected purity below the user given rate, the extension will send a notification that Gold Price Dropped.
+- When the rate for the selected purity drops below the user given rate, the extension sends a notification that Gold Price Dropped. It alerts once per dip: not again while the price stays below, but again after it recovers and drops once more, or when the user sets a new alert price.
 
 
 
@@ -70,15 +70,23 @@ function priceDropAlertNotifi(purity, goldRate, targetRate) {
 ```
 
 ### Sending notifications
-The price is checked whenever IBJA publishes a new rate or the user changes their purity or rate, so each of those sends at most one notification.
+The price is checked after every fetch and whenever the user changes their purity or rate. `alertedDips` remembers which alert price has already fired during the current dip, so each dip sends one notification.
 ```javascript
-async function checkPriceDrop() {
-    const { goldRates = {}, targetRates = {}, purity = '24K' } = await chrome.storage.local.get(['goldRates', 'targetRates', 'purity']);
-    const goldRate = goldRates[purity];
-    const targetRate = targetRates[purity];
-    if (goldRate && targetRate && goldRate < targetRate) {
-        priceDropAlertNotifi(purity, goldRate, targetRate);
+async function runPriceDropCheck() {
+    const { goldRates = {}, targetRates = {}, purity = '24K', alertedDips = {} } =
+        await chrome.storage.local.get(['goldRates', 'targetRates', 'purity', 'alertedDips']);
+    const isBelow = (p) => Boolean(goldRates[p] && targetRates[p] && goldRates[p] < targetRates[p]);
+    const dips = {};
+    for (const p of Object.keys(PURITY_CODES)) {
+        if (isBelow(p) && alertedDips[p] === targetRates[p]) {
+            dips[p] = targetRates[p];
+        }
     }
+    if (isBelow(purity) && dips[purity] === undefined) {
+        priceDropAlertNotifi(purity, goldRates[purity], targetRates[purity]);
+        dips[purity] = targetRates[purity];
+    }
+    await chrome.storage.local.set({ alertedDips: dips });
 }
 ```
 ## 🚀 About Me
