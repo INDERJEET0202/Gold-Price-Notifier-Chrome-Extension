@@ -7,6 +7,7 @@ importScripts('format.js');
 // twice each working day, an AM rate around noon and a PM rate around 5-6 PM IST.
 const IBJA_URL = 'https://ibjarates.com/';
 const REFRESH_ALARM = 'refresh-gold-rate';
+const PRICE_DROP_NOTIFICATION = 'price-drop';
 const ALARM_PERIOD_MINUTES = 60; // How often we wake up to check whether the rate is due for a refresh.
 const HOUR_MS = 60 * 60 * 1000;
 const IST_OFFSET_MS = 5.5 * HOUR_MS; // India has no daylight saving.
@@ -51,6 +52,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         checkPriceDrop();
     }
 });
+
+chrome.notifications.onClicked.addListener(openIbjaFromNotification);
 
 // Alarms usually survive browser restarts, but Chrome doesn't guarantee it.
 async function ensureRefreshAlarm() {
@@ -213,7 +216,7 @@ async function runPriceDropCheck() {
 
 // This is the notification function which will be called when the gold price decreases.
 function priceDropAlertNotifi(purity, goldRate, targetRate) {
-    chrome.notifications.create('price-drop', {
+    chrome.notifications.create(PRICE_DROP_NOTIFICATION, {
         type: 'basic',
         iconUrl: 'Icons/logo.png',
         title: 'Gold Price Drop Alert',
@@ -221,4 +224,12 @@ function priceDropAlertNotifi(purity, goldRate, targetRate) {
     }, function (notificationId) {
         console.log('Notification sent with ID:', notificationId);
     });
+}
+
+// Clicking a price alert opens ibjarates.com, where the full rate table is, and dismisses the alert.
+function openIbjaFromNotification(notificationId) {
+    if (notificationId === PRICE_DROP_NOTIFICATION) {
+        chrome.tabs.create({ url: IBJA_URL });
+        chrome.notifications.clear(notificationId);
+    }
 }
