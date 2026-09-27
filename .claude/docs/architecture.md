@@ -49,6 +49,12 @@ Alerts fire **once per dip**: when the selected purity's rate first goes strictl
 
 Every alert uses the notification id `price-drop` (`PRICE_DROP_NOTIFICATION`), so a new one replaces any that is still showing. Clicking it runs `openIbjaFromNotification()`, which opens ibjarates.com in a new tab and dismisses the alert.
 
+## Toolbar badge
+
+`updateBadge()` shows the selected purity's rate on the toolbar icon in thousands (`158K` for ₹1,57,739), because Chrome's badge only fits about four characters. The badge is gold (`BADGE_COLOR`), or green (`BADGE_COLOR_BELOW_TARGET`) while the rate is below the alert price, and empty until there is a rate. The icon's tooltip (`chrome.action.setTitle`) has the full rate, the session and the distance to the alert price.
+
+It runs when `goldRates`, `targetRates` or `purity` change in storage, and on install and startup, because Chrome clears the badge when the browser restarts.
+
 ## Other behaviour
 
 - On install the built-in `welcome.html` guide opens. Updates open nothing, and there is no uninstall page (updates clear the one that versions before 1.3 set).
