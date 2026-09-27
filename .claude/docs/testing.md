@@ -27,6 +27,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/trend.spec.js` | `rateHistory` (merging, PM over AM, dates in India, the 10-day limit) and the popup's trend line and sparkline |
 | `tests/gst.spec.js` | The GST switch in the popup, per-gram prices, entering an alert price with GST, and GST in alerts and the badge |
 | `tests/badge.spec.js` | The toolbar badge's text, colour and tooltip, following the purity and alert price, and after a restart |
+| `tests/package.spec.js` | The Web Store zip: `PACKAGE_FILES` matches every file the manifest, pages and `background.js` refer to; the manifest meets the store limits; the zip unpacks to identical files that Chrome loads and runs; the store images have the required sizes |
 | `tests/icons.spec.js` | Static checks (no browser): manifest icons are PNGs of their listed sizes, the notification icon is 256px and small, and `scripts/render-icons.js` renders every icon |
 | `tests/notification-click.spec.js` | Clicking a price alert opens ibjarates.com (calls the `onClicked` handler directly, since tests can't click a desktop notification) |
 
