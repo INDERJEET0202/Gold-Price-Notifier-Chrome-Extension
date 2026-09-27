@@ -24,6 +24,7 @@ npm test                          # or: npx playwright test tests/parsing.spec.j
 | `tests/lifecycle.spec.js` | Install alarm and fetch, surviving a browser restart |
 | `tests/refresh-schedule.spec.js` | How often `refreshIfStale(now)` fetches inside and outside IBJA's publishing windows and at weekends |
 | `tests/welcome.spec.js` | The welcome page opening on install and fitting the window |
+| `tests/notification-click.spec.js` | Clicking a price alert opens ibjarates.com (calls the `onClicked` handler directly, since tests can't click a desktop notification) |
 
 ## How the fixtures work
 

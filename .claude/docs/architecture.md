@@ -47,7 +47,7 @@ Alerts fire **once per dip**: when the selected purity's rate first goes strictl
   - saving a different alert price during a dip alerts once for the new price;
   - switching purity alerts if that purity is in a dip that hasn't alerted yet.
 
-Every alert uses the notification id `price-drop`, so a new one replaces any that is still showing.
+Every alert uses the notification id `price-drop` (`PRICE_DROP_NOTIFICATION`), so a new one replaces any that is still showing. Clicking it runs `openIbjaFromNotification()`, which opens ibjarates.com in a new tab and dismisses the alert.
 
 ## Other behaviour
 

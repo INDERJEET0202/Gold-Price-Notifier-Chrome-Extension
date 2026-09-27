@@ -32,7 +32,7 @@ npm test
 - IBJA doesn't publish on weekends and central government holidays. On those days the extension shows the latest earlier rate from the page's AM/PM history tables, with its date.
 - IBJA has no public API, so the rate is read from the ibjarates.com page. If the site changes its layout, the popup shows an error until the parser is updated.
 - Users pick a purity and input a gold rate for it; these are saved in `chrome.storage.local` along with the latest rates.
-- When the rate for the selected purity drops below the user given rate, the extension sends a notification that Gold Price Dropped. It alerts once per dip: not again while the price stays below, but again after it recovers and drops once more, or when the user sets a new alert price.
+- When the rate for the selected purity drops below the user given rate, the extension sends a notification that Gold Price Dropped. It alerts once per dip: not again while the price stays below, but again after it recovers and drops once more, or when the user sets a new alert price. Clicking the notification opens ibjarates.com.
 
 
 
