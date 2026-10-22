@@ -12,6 +12,11 @@ Gold Price Drop Notifier is a Chrome extension that helps you stay up-to-date wi
 No API key or account is needed.
 
 
+## Email alerts (optional)
+
+Desktop notifications only show while Chrome is open, and they're easy to miss. [`email-alerts/`](email-alerts) has a free Google Apps Script that emails you when the rate drops below your price, even when your laptop is off. It runs on Google's servers under your own account and takes about 5 minutes to set up. It's separate from the extension, so set your alert price in both.
+
+
 ## Running the tests
 
 End-to-end tests load the extension into Chromium with [Playwright](https://playwright.dev) and check the rate parsing, alerts and popup against fake ibjarates.com pages. They never contact the real site.
